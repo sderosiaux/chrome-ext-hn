@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "HN Distill",
+  "version": "1.0.0",
+  "description": "Distill Hacker News threads into actionable learning insights with AI-powered theme clustering",
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://news.ycombinator.com/*",
+    "https://hn.algolia.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [{
+    "matches": ["https://news.ycombinator.com/item*"],
+    "js": ["content.js"],
+    "css": ["content.css"],
+    "run_at": "document_idle"
+  }],
+
+  "web_accessible_resources": [{
+    "resources": [
+      "sidepanel.html",
+      "sidepanel.js",
+      "sidepanel.css",
+      "design-system.css",
+      "api_client.js",
+      "prompts.js"
+    ],
+    "matches": ["https://news.ycombinator.com/*"]
+  }],
+
+  "action": {
+    "default_title": "Distill this HN thread"
+  }
+}

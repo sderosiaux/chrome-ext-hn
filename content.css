@@ -1,0 +1,220 @@
+/* content.css - Styles for the floating button and overlay */
+
+/* Floating Action Button */
+.hn-distill-fab {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  z-index: 999999;
+
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  padding: 1.25rem 2rem;
+
+  background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%);
+  color: white;
+
+  border: none;
+  border-radius: 9999px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 16px -2px rgba(255, 102, 0, 0.4),
+    0 4px 8px -2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 102, 0, 0.1);
+
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 16px -2px rgba(255, 102, 0, 0.4),
+      0 4px 8px -2px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 102, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow:
+      0 12px 24px -3px rgba(255, 102, 0, 0.5),
+      0 6px 12px -3px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 102, 0, 0.2);
+  }
+}
+
+.hn-distill-fab:hover {
+  background: linear-gradient(135deg, #e65c00 0%, #ff6600 100%);
+  box-shadow:
+    0 16px 32px -4px rgba(255, 102, 0, 0.5),
+    0 8px 16px -4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 102, 0, 0.2);
+  transform: translateY(-3px) scale(1.05);
+  animation: none;
+}
+
+.hn-distill-fab:active {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 8px 16px -2px rgba(255, 102, 0, 0.4),
+    0 4px 8px -2px rgba(0, 0, 0, 0.2);
+}
+
+.hn-distill-fab svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.hn-distill-fab span {
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Overlay */
+.hn-distill-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000000;
+
+  display: none; /* Hidden by default */
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.hn-distill-modal {
+  position: relative;
+  width: 90vw;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 900px;
+
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  overflow: hidden;
+
+  animation: slideUp 200ms ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Close Button */
+.hn-distill-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+
+  width: 3rem;
+  height: 3rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.95);
+  color: #737373;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.75rem;
+
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 150ms ease;
+}
+
+.hn-distill-close:hover {
+  background: white;
+  color: #0a0a0a;
+  border-color: #d4d4d4;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.hn-distill-close:active {
+  transform: scale(0.95);
+}
+
+/* Iframe */
+.hn-distill-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .hn-distill-fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 1rem;
+  }
+
+  .hn-distill-fab span {
+    display: none;
+  }
+
+  .hn-distill-fab svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .hn-distill-modal {
+    width: 95vw;
+    height: 95vh;
+    border-radius: 0.75rem;
+  }
+
+  .hn-distill-close {
+    width: 2.5rem;
+    height: 2.5rem;
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 1.5rem;
+  }
+}
