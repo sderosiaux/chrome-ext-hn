@@ -15,6 +15,7 @@ const threadCache = new Map();
 const elements = {
   // Header
   headerTitle: document.getElementById("header-title"),
+  copyMarkdownBtn: document.getElementById("copyMarkdownBtn"),
   apiKeyBtn: document.getElementById("apiKeyBtn"),
 
   // States
@@ -187,6 +188,9 @@ function setupEventListeners() {
   // Retry button
   elements.retryBtn.addEventListener("click", handleAnalyze);
 
+  // Copy markdown button
+  elements.copyMarkdownBtn.addEventListener("click", handleCopyMarkdown);
+
   // API Key modal
   elements.apiKeyBtn.addEventListener("click", () => openModal("apiKey"));
   elements.saveApiKeyBtn.addEventListener("click", saveApiKey);
@@ -335,6 +339,103 @@ async function handleAnalyze() {
       showError(errorMessage);
     }
   }
+}
+
+// Handle copy markdown button click
+async function handleCopyMarkdown() {
+  const cached = getThreadState(currentThreadId);
+  if (!cached || !cached.analysisResult) {
+    console.log("HN Distill: No analysis results to copy");
+    return;
+  }
+
+  const markdown = generateMarkdown(cached.threadData, cached.analysisResult);
+
+  try {
+    await navigator.clipboard.writeText(markdown);
+
+    // Visual feedback - temporarily change button appearance
+    const originalTitle = elements.copyMarkdownBtn.title;
+    elements.copyMarkdownBtn.title = "Copied!";
+    elements.copyMarkdownBtn.classList.add("copied");
+
+    setTimeout(() => {
+      elements.copyMarkdownBtn.title = originalTitle;
+      elements.copyMarkdownBtn.classList.remove("copied");
+    }, 2000);
+
+    console.log("HN Distill: Markdown copied to clipboard");
+  } catch (error) {
+    console.error("HN Distill: Failed to copy to clipboard:", error);
+  }
+}
+
+// Generate markdown from analysis results
+function generateMarkdown(threadData, analysisResult) {
+  const lines = [];
+
+  // Title
+  lines.push(`# ${threadData.title}`);
+  lines.push("");
+
+  // Global summary
+  lines.push("## Key Learnings");
+  lines.push("");
+  analysisResult.global_summary.key_learnings.forEach((learning) => {
+    lines.push(`- ${learning}`);
+  });
+  lines.push("");
+
+  // Themes
+  lines.push("## Themes");
+  lines.push("");
+
+  analysisResult.themes.forEach((theme) => {
+    lines.push(`### ${theme.title}`);
+    lines.push("");
+    lines.push(`> ${theme.why_it_matters}`);
+    lines.push("");
+
+    // Key points
+    lines.push("**Key Points:**");
+    lines.push("");
+    theme.key_points.forEach((point) => {
+      lines.push(`- ${point}`);
+    });
+    lines.push("");
+
+    // Glossary
+    if (theme.glossary && theme.glossary.length > 0) {
+      lines.push("**Glossary:**");
+      lines.push("");
+      theme.glossary.forEach((entry) => {
+        lines.push(`- **${entry.term}**: ${entry.definition_en}`);
+      });
+      lines.push("");
+    }
+
+    // Beyond basic
+    if (theme.beyond_basic && theme.beyond_basic.length > 0) {
+      lines.push("**Beyond the Basics:**");
+      lines.push("");
+      theme.beyond_basic.forEach((text) => {
+        lines.push(text);
+        lines.push("");
+      });
+    }
+
+    // Links
+    if (theme.links && theme.links.length > 0) {
+      lines.push("**Links:**");
+      lines.push("");
+      theme.links.forEach((link) => {
+        lines.push(`- [${link.label}](${link.url})`);
+      });
+      lines.push("");
+    }
+  });
+
+  return lines.join("\n");
 }
 
 // Fetch thread data from Algolia API
@@ -653,6 +754,7 @@ function showState(state) {
   elements.loadingState.style.display = "none";
   elements.errorState.style.display = "none";
   elements.resultsContainer.style.display = "none";
+  elements.copyMarkdownBtn.style.display = "none";
 
   switch (state) {
     case "loading":
@@ -663,6 +765,7 @@ function showState(state) {
       break;
     case "results":
       elements.resultsContainer.style.display = "block";
+      elements.copyMarkdownBtn.style.display = "inline-flex";
       break;
   }
 }

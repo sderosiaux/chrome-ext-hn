@@ -113,6 +113,12 @@ body {
   border-color: var(--color-border-hover);
 }
 
+.icon-btn.copied {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
 .icon-btn svg {
   width: 1.5rem;
   height: 1.5rem;
