@@ -342,8 +342,9 @@ async function handleAnalyze() {
 }
 
 // Handle copy markdown button click
-async function handleCopyMarkdown() {
+function handleCopyMarkdown() {
   const cached = getThreadState(currentThreadId);
+
   if (!cached || !cached.analysisResult) {
     console.log("HN Distill: No analysis results to copy");
     return;
@@ -351,10 +352,11 @@ async function handleCopyMarkdown() {
 
   const markdown = generateMarkdown(cached.threadData, cached.analysisResult);
 
-  try {
-    await navigator.clipboard.writeText(markdown);
+  // Use execCommand fallback (Clipboard API is blocked in extension sidepanels)
+  const success = copyToClipboardFallback(markdown);
 
-    // Visual feedback - temporarily change button appearance
+  if (success) {
+    // Visual feedback
     const originalTitle = elements.copyMarkdownBtn.title;
     elements.copyMarkdownBtn.title = "Copied!";
     elements.copyMarkdownBtn.classList.add("copied");
@@ -365,17 +367,41 @@ async function handleCopyMarkdown() {
     }, 2000);
 
     console.log("HN Distill: Markdown copied to clipboard");
-  } catch (error) {
-    console.error("HN Distill: Failed to copy to clipboard:", error);
+  } else {
+    console.error("HN Distill: Failed to copy to clipboard");
   }
+}
+
+// Fallback copy method using execCommand (works in extension contexts)
+function copyToClipboardFallback(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  let success = false;
+  try {
+    success = document.execCommand("copy");
+  } catch (err) {
+    console.error("HN Distill: execCommand copy failed:", err);
+  }
+
+  document.body.removeChild(textarea);
+  return success;
 }
 
 // Generate markdown from analysis results
 function generateMarkdown(threadData, analysisResult) {
   const lines = [];
 
-  // Title
+  // Title with source link
   lines.push(`# ${threadData.title}`);
+  lines.push("");
+  lines.push(`> Source: [Hacker News Thread](https://news.ycombinator.com/item?id=${threadData.thread_id})`);
   lines.push("");
 
   // Global summary
