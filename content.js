@@ -19,6 +19,18 @@
     return urlParams.get('id');
   }
 
+  // Extract thread title from the page
+  function getThreadTitle() {
+    // Try to get the title from the HN page structure
+    const titleLine = document.querySelector('.titleline > a');
+    if (titleLine) {
+      return titleLine.textContent.trim();
+    }
+    // Fallback to page title (often includes " | Hacker News")
+    const pageTitle = document.title.replace(' | Hacker News', '').trim();
+    return pageTitle || 'Untitled';
+  }
+
   // Create overlay container
   function createOverlay() {
     // Overlay backdrop
@@ -30,19 +42,12 @@
     const modal = document.createElement('div');
     modal.className = 'hn-distill-modal';
 
-    // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'hn-distill-close';
-    closeBtn.innerHTML = '×';
-    closeBtn.addEventListener('click', hideOverlay);
-
     // Iframe to load sidepanel.html
     const iframe = document.createElement('iframe');
     iframe.className = 'hn-distill-iframe';
     iframe.src = chrome.runtime.getURL('sidepanel.html');
     iframe.setAttribute('frameborder', '0');
 
-    modal.appendChild(closeBtn);
     modal.appendChild(iframe);
     overlay.appendChild(modal);
 
@@ -136,7 +141,8 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getThreadId') {
       const threadId = getThreadId();
-      sendResponse({ threadId });
+      const threadTitle = getThreadTitle();
+      sendResponse({ threadId, threadTitle });
       return true;
     }
   });

@@ -113,10 +113,10 @@
 /* Modal Container */
 .hn-distill-modal {
   position: relative;
-  width: 90vw;
-  max-width: 1200px;
-  height: 90vh;
-  max-height: 900px;
+  width: 95vw;
+  max-width: 1400px;
+  height: 95vh;
+  max-height: 1000px;
 
   background: white;
   border-radius: 1rem;
@@ -136,47 +136,6 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-}
-
-/* Close Button */
-.hn-distill-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
-
-  width: 3rem;
-  height: 3rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(255, 255, 255, 0.95);
-  color: #737373;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.75rem;
-
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
-
-  cursor: pointer;
-
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  transition: all 150ms ease;
-}
-
-.hn-distill-close:hover {
-  background: white;
-  color: #0a0a0a;
-  border-color: #d4d4d4;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform: scale(1.05);
-}
-
-.hn-distill-close:active {
-  transform: scale(0.95);
 }
 
 /* Iframe */
@@ -208,13 +167,5 @@
     width: 95vw;
     height: 95vh;
     border-radius: 0.75rem;
-  }
-
-  .hn-distill-close {
-    width: 2.5rem;
-    height: 2.5rem;
-    top: 0.75rem;
-    right: 0.75rem;
-    font-size: 1.5rem;
   }
 }

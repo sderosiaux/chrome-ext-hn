@@ -12,26 +12,13 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <h1 class="header-title">HN Distill</h1>
-        <div id="thread-info" class="header-subtitle"></div>
+        <h1 id="header-title" class="header-title">HN Distill</h1>
       </div>
       <div class="header-actions">
-        <button id="autoAnalyzeBtn" class="icon-btn" title="Auto-analyze threads">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-        </button>
         <button id="apiKeyBtn" class="icon-btn" title="Configure API Key">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 7h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-3m-6 0H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3m0 0V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M9 7h6"/>
           </svg>
-        </button>
-        <button id="analyzeBtn" class="btn-primary" title="Analyze Thread">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            <path d="M9 12h6m-6 4h6"/>
-          </svg>
-          Analyze
         </button>
       </div>
     </div>
@@ -39,20 +26,6 @@
 
   <!-- Main Content -->
   <main id="main-content" class="main-content">
-    <!-- Empty State -->
-    <div id="empty-state" class="empty-state">
-      <div class="empty-state-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-          <path d="M9 12h6m-6 4h6"/>
-        </svg>
-      </div>
-      <h2 class="empty-state-title">Ready to distill insights</h2>
-      <p class="empty-state-description">
-        Click "Analyze" to extract themes, learnings, and key terms from this HN thread.
-      </p>
-    </div>
-
     <!-- Loading State -->
     <div id="loading-state" class="loading-state" style="display: none;">
       <div class="loading-spinner"></div>

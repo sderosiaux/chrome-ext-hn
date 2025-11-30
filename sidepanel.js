@@ -6,7 +6,6 @@ import { buildHNAnalysisPrompt } from "./prompts.js";
 // Global state
 let apiKey = null;
 let currentThreadId = null;
-let autoAnalyze = false; // Auto-analyze threads when opening them
 
 // Thread-specific cache
 // Key: threadId, Value: { state, threadData, analysisResult, error }
@@ -15,13 +14,10 @@ const threadCache = new Map();
 // DOM Elements
 const elements = {
   // Header
-  threadInfo: document.getElementById("thread-info"),
-  autoAnalyzeBtn: document.getElementById("autoAnalyzeBtn"),
+  headerTitle: document.getElementById("header-title"),
   apiKeyBtn: document.getElementById("apiKeyBtn"),
-  analyzeBtn: document.getElementById("analyzeBtn"),
 
   // States
-  emptyState: document.getElementById("empty-state"),
   loadingState: document.getElementById("loading-state"),
   errorState: document.getElementById("error-state"),
   errorMessage: document.getElementById("error-message"),
@@ -66,9 +62,6 @@ async function init() {
 
   // Load API key from storage
   await loadApiKey();
-
-  // Load auto-analyze preference from storage
-  await loadAutoAnalyze();
 
   // Get thread ID from the active tab
   await loadThreadId();
@@ -138,29 +131,6 @@ async function loadApiKey() {
   }
 }
 
-// Load auto-analyze preference from Chrome storage
-async function loadAutoAnalyze() {
-  try {
-    const result = await chrome.storage.local.get(["autoAnalyze"]);
-    autoAnalyze = result.autoAnalyze || false;
-    updateAutoAnalyzeButton();
-    console.log("HN Distill: Auto-analyze:", autoAnalyze);
-  } catch (error) {
-    console.error("HN Distill: Error loading auto-analyze preference:", error);
-  }
-}
-
-// Update auto-analyze button state
-function updateAutoAnalyzeButton() {
-  if (autoAnalyze) {
-    elements.autoAnalyzeBtn.classList.add("active");
-    elements.autoAnalyzeBtn.title = "Auto-analyze enabled (click to disable)";
-  } else {
-    elements.autoAnalyzeBtn.classList.remove("active");
-    elements.autoAnalyzeBtn.title = "Auto-analyze disabled (click to enable)";
-  }
-}
-
 // Load thread ID from the active tab
 async function loadThreadId() {
   try {
@@ -172,7 +142,7 @@ async function loadThreadId() {
     if (!tab) {
       console.error("HN Distill: No active tab found");
       currentThreadId = null;
-      elements.threadInfo.textContent = "No active tab";
+      elements.headerTitle.textContent = "HN Distill";
       return;
     }
 
@@ -180,7 +150,7 @@ async function loadThreadId() {
     if (!tab.url || !tab.url.includes("news.ycombinator.com/item")) {
       console.log("HN Distill: Not on a HN thread page");
       currentThreadId = null;
-      elements.threadInfo.textContent = "Not on a HN thread";
+      elements.headerTitle.textContent = "HN Distill";
       return;
     }
 
@@ -191,27 +161,30 @@ async function loadThreadId() {
 
     if (response && response.threadId) {
       currentThreadId = response.threadId;
-      elements.threadInfo.textContent = `Thread #${currentThreadId}`;
       console.log("HN Distill: Thread ID loaded:", currentThreadId);
+
+      // Set the title from the page (or cache if available)
+      const cached = getThreadState(currentThreadId);
+      if (cached && cached.threadData && cached.threadData.title) {
+        elements.headerTitle.textContent = cached.threadData.title;
+      } else if (response.threadTitle) {
+        elements.headerTitle.textContent = response.threadTitle;
+      }
     } else {
       console.log("HN Distill: No thread ID in response");
       currentThreadId = null;
-      elements.threadInfo.textContent = "No thread detected";
+      elements.headerTitle.textContent = "HN Distill";
     }
   } catch (error) {
     console.error("HN Distill: Error loading thread ID:", error);
     currentThreadId = null;
-    elements.threadInfo.textContent = "Error loading thread";
+    elements.headerTitle.textContent = "HN Distill";
   }
 }
 
 // Setup event listeners
 function setupEventListeners() {
-  // Auto-analyze toggle
-  elements.autoAnalyzeBtn.addEventListener("click", toggleAutoAnalyze);
-
-  // Analyze button
-  elements.analyzeBtn.addEventListener("click", handleAnalyze);
+  // Retry button
   elements.retryBtn.addEventListener("click", handleAnalyze);
 
   // API Key modal
@@ -260,6 +233,11 @@ function setThreadState(threadId, state, data = {}) {
 
 // Restore UI based on cached thread state
 function restoreThreadState(cached) {
+  // Restore header title if available
+  if (cached.threadData && cached.threadData.title) {
+    elements.headerTitle.textContent = cached.threadData.title;
+  }
+
   switch (cached.state) {
     case "analyzing":
       showState("loading");
@@ -270,7 +248,7 @@ function restoreThreadState(cached) {
         renderResults(cached.analysisResult);
         showState("results");
       } else {
-        showState("empty");
+        showState("loading");
       }
       break;
 
@@ -279,7 +257,7 @@ function restoreThreadState(cached) {
       break;
 
     default:
-      showState("empty");
+      showState("loading");
   }
 }
 
@@ -310,6 +288,9 @@ async function handleAnalyze() {
     // Step 2: Pre-process and filter comments
     console.log("HN Distill: Processing comments...");
     const processedData = processThreadData(threadData);
+
+    // Update header title with thread title
+    elements.headerTitle.textContent = processedData.title;
 
     // Store thread data in cache
     setThreadState(threadId, "analyzing", { threadData: processedData });
@@ -656,28 +637,6 @@ async function saveApiKey() {
   }
 }
 
-// Toggle auto-analyze
-async function toggleAutoAnalyze() {
-  autoAnalyze = !autoAnalyze;
-
-  try {
-    await chrome.storage.local.set({ autoAnalyze });
-    updateAutoAnalyzeButton();
-    console.log("HN Distill: Auto-analyze toggled:", autoAnalyze);
-
-    // If we just enabled auto-analyze and we're on a thread that hasn't been analyzed
-    if (autoAnalyze && apiKey && currentThreadId) {
-      const cached = getThreadState(currentThreadId);
-      if (!cached) {
-        console.log("HN Distill: Auto-analyze enabled, starting analysis...");
-        await handleAnalyze();
-      }
-    }
-  } catch (error) {
-    console.error("HN Distill: Error saving auto-analyze preference:", error);
-  }
-}
-
 // Update API key status
 function updateApiKeyStatus(configured) {
   if (configured) {
@@ -691,15 +650,11 @@ function updateApiKeyStatus(configured) {
 
 // Show/hide states
 function showState(state) {
-  elements.emptyState.style.display = "none";
   elements.loadingState.style.display = "none";
   elements.errorState.style.display = "none";
   elements.resultsContainer.style.display = "none";
 
   switch (state) {
-    case "empty":
-      elements.emptyState.style.display = "flex";
-      break;
     case "loading":
       elements.loadingState.style.display = "flex";
       break;
