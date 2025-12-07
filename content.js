@@ -153,21 +153,4 @@
   } else {
     createDistillButton();
   }
-
-  // Handle SPA-like navigation (if HN uses it)
-  const observer = new MutationObserver(() => {
-    const currentThreadId = getThreadId();
-    const button = document.getElementById('hn-distill-button');
-
-    if (currentThreadId && !button) {
-      createDistillButton();
-    } else if (!currentThreadId && button) {
-      button.remove();
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
 })();

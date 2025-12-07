@@ -5,6 +5,8 @@ import { buildHNAnalysisPrompt } from "./prompts.js";
 
 // Global state
 let apiKey = null;
+let language = "en";
+let personalContext = "";
 let currentThreadId = null;
 
 // Thread-specific cache
@@ -27,6 +29,20 @@ const elements = {
   // Results
   resultsContainer: document.getElementById("results-container"),
   globalLearnings: document.getElementById("global-learnings"),
+
+  // Tabs
+  tabButtons: document.querySelectorAll(".tab-btn"),
+  tabPanels: document.querySelectorAll(".tab-panel"),
+  criticalTabBtn: document.getElementById("critical-tab-btn"),
+  criticalThinkingPanel: document.getElementById("critical-thinking-panel"),
+
+  // Critical Thinking
+  ctBreaks: document.getElementById("ct-breaks"),
+  ctNonObvious: document.getElementById("ct-non-obvious"),
+  ctAssumptions: document.getElementById("ct-assumptions"),
+  ctBottleneck: document.getElementById("ct-bottleneck"),
+  ctLeverage: document.getElementById("ct-leverage"),
+
   themesList: document.getElementById("themes-list"),
   themeDetail: document.getElementById("theme-detail"),
 
@@ -44,10 +60,12 @@ const elements = {
   showCommentsBtn: document.getElementById("show-comments-btn"),
   commentCount: document.getElementById("comment-count"),
 
-  // Modals
+  // Settings Modal
   apiKeyModal: document.getElementById("apiKeyModal"),
   apiKeyInput: document.getElementById("apiKeyInput"),
   apiKeyStatus: document.getElementById("apiKeyStatus"),
+  languageSelect: document.getElementById("languageSelect"),
+  personalContextInput: document.getElementById("personalContext"),
   saveApiKeyBtn: document.getElementById("saveApiKeyBtn"),
   cancelApiKeyBtn: document.getElementById("cancelApiKeyBtn"),
   closeApiKeyBtn: document.getElementById("closeApiKeyBtn"),
@@ -61,8 +79,8 @@ const elements = {
 async function init() {
   console.log("HN Distill: Sidepanel initializing");
 
-  // Load API key from storage
-  await loadApiKey();
+  // Load settings from storage
+  await loadSettings();
 
   // Get thread ID from the active tab
   await loadThreadId();
@@ -115,10 +133,11 @@ async function handleAnalyzeOnOpen() {
   }
 }
 
-// Load API key from Chrome storage
-async function loadApiKey() {
+// Load settings from Chrome storage
+async function loadSettings() {
   try {
-    const result = await chrome.storage.local.get(["apiKey"]);
+    const result = await chrome.storage.local.get(["apiKey", "language", "personalContext"]);
+
     if (result.apiKey) {
       apiKey = result.apiKey;
       updateApiKeyStatus(true);
@@ -126,8 +145,18 @@ async function loadApiKey() {
     } else {
       updateApiKeyStatus(false);
     }
+
+    if (result.language) {
+      language = result.language;
+    }
+
+    if (result.personalContext) {
+      personalContext = result.personalContext;
+    }
+
+    console.log("HN Distill: Settings loaded", { language, hasPersonalContext: !!personalContext });
   } catch (error) {
-    console.error("HN Distill: Error loading API key:", error);
+    console.error("HN Distill: Error loading settings:", error);
     updateApiKeyStatus(false);
   }
 }
@@ -193,7 +222,7 @@ function setupEventListeners() {
 
   // API Key modal
   elements.apiKeyBtn.addEventListener("click", () => openModal("apiKey"));
-  elements.saveApiKeyBtn.addEventListener("click", saveApiKey);
+  elements.saveApiKeyBtn.addEventListener("click", saveSettings);
   elements.cancelApiKeyBtn.addEventListener("click", () =>
     closeModal("apiKey"),
   );
@@ -206,6 +235,11 @@ function setupEventListeners() {
 
   // Back to themes
   elements.backToThemes.addEventListener("click", showThemesList);
+
+  // Tab switching
+  elements.tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
 
   // Close modals on overlay click
   elements.apiKeyModal.addEventListener("click", (e) => {
@@ -301,7 +335,7 @@ async function handleAnalyze() {
 
     // Step 3: Build prompt
     console.log("HN Distill: Building analysis prompt...");
-    const prompt = buildHNAnalysisPrompt(processedData);
+    const prompt = buildHNAnalysisPrompt(processedData, { language, personalContext });
 
     // Step 4: Call LLM
     console.log("HN Distill: Calling LLM API...");
@@ -412,6 +446,43 @@ function generateMarkdown(threadData, analysisResult) {
   });
   lines.push("");
 
+  // Critical Thinking
+  if (analysisResult.critical_thinking) {
+    const ct = analysisResult.critical_thinking;
+    lines.push("## Critical Thinking");
+    lines.push("");
+
+    if (ct.what_breaks_this) {
+      lines.push("### What breaks this?");
+      lines.push(ct.what_breaks_this);
+      lines.push("");
+    }
+
+    if (ct.non_obvious_truth) {
+      lines.push("### Non-obvious truth");
+      lines.push(ct.non_obvious_truth);
+      lines.push("");
+    }
+
+    if (ct.hidden_assumptions) {
+      lines.push("### Hidden assumptions");
+      lines.push(ct.hidden_assumptions);
+      lines.push("");
+    }
+
+    if (ct.new_bottleneck) {
+      lines.push("### New bottleneck");
+      lines.push(ct.new_bottleneck);
+      lines.push("");
+    }
+
+    if (ct.leverage_point) {
+      lines.push("### Leverage point");
+      lines.push(ct.leverage_point);
+      lines.push("");
+    }
+  }
+
   // Themes
   lines.push("## Themes");
   lines.push("");
@@ -435,7 +506,7 @@ function generateMarkdown(threadData, analysisResult) {
       lines.push("**Glossary:**");
       lines.push("");
       theme.glossary.forEach((entry) => {
-        lines.push(`- **${entry.term}**: ${entry.definition_en}`);
+        lines.push(`- **${entry.term}**: ${entry.definition}`);
       });
       lines.push("");
     }
@@ -550,8 +621,72 @@ function renderResults(data) {
   // Render global summary
   renderGlobalSummary(data.global_summary);
 
+  // Render critical thinking section
+  renderCriticalThinking(data.critical_thinking);
+
   // Render themes list
   renderThemesList(data.themes);
+}
+
+// Render critical thinking section
+function renderCriticalThinking(criticalThinking) {
+  if (!criticalThinking) {
+    elements.criticalTabBtn.style.display = "none";
+    return;
+  }
+
+  // Show the critical thinking tab
+  elements.criticalTabBtn.style.display = "inline-flex";
+
+  // Render each section with bullet list support
+  renderCriticalContent(elements.ctBreaks, criticalThinking.what_breaks_this);
+  renderCriticalContent(elements.ctNonObvious, criticalThinking.non_obvious_truth);
+  renderCriticalContent(elements.ctAssumptions, criticalThinking.hidden_assumptions);
+  renderCriticalContent(elements.ctBottleneck, criticalThinking.new_bottleneck);
+  renderCriticalContent(elements.ctLeverage, criticalThinking.leverage_point);
+}
+
+// Render critical thinking content with bullet list parsing
+function renderCriticalContent(element, text) {
+  if (!text) {
+    element.innerHTML = "";
+    return;
+  }
+
+  // Check if text contains bullet points (lines starting with - or •)
+  const lines = text.split("\n").filter((line) => line.trim());
+  const hasBullets = lines.some((line) => /^\s*[-•]\s/.test(line));
+
+  if (hasBullets) {
+    // Parse as bullet list
+    const ul = document.createElement("ul");
+    lines.forEach((line) => {
+      const cleanLine = line.replace(/^\s*[-•]\s*/, "").trim();
+      if (cleanLine) {
+        const li = document.createElement("li");
+        li.textContent = cleanLine;
+        ul.appendChild(li);
+      }
+    });
+    element.innerHTML = "";
+    element.appendChild(ul);
+  } else {
+    // Render as plain text
+    element.textContent = text;
+  }
+}
+
+// Switch between tabs
+function switchTab(tabName) {
+  // Update button states
+  elements.tabButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === tabName);
+  });
+
+  // Update panel visibility
+  elements.tabPanels.forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.panel === tabName);
+  });
 }
 
 // Render global summary
@@ -628,14 +763,7 @@ function showThemeDetail(themeIndex) {
 
       const dd = document.createElement("dd");
       dd.className = "glossary-definition";
-      dd.textContent = entry.definition_en;
-
-      if (entry.definition_fr) {
-        const fr = document.createElement("div");
-        fr.className = "glossary-definition-fr";
-        fr.textContent = `🇫🇷 ${entry.definition_fr}`;
-        dd.appendChild(fr);
-      }
+      dd.textContent = entry.definition;
 
       elements.themeDetailGlossary.appendChild(dt);
       elements.themeDetailGlossary.appendChild(dd);
@@ -696,19 +824,20 @@ function showThemeDetail(themeIndex) {
     showComments(commentRefs),
   );
 
-  // Show theme detail, hide themes list
-  elements.themesList.parentElement.style.display = "none";
-  elements.resultsContainer.querySelector(".summary-section").style.display =
-    "none";
+  // Show theme detail, hide tabs and summary
+  elements.resultsContainer.querySelector(".tabs-container").style.display = "none";
+  elements.resultsContainer.querySelector(".summary-section").style.display = "none";
   elements.themeDetail.style.display = "block";
 }
 
 // Show themes list (back from detail)
 function showThemesList() {
   elements.themeDetail.style.display = "none";
-  elements.themesList.parentElement.style.display = "block";
-  elements.resultsContainer.querySelector(".summary-section").style.display =
-    "block";
+  elements.resultsContainer.querySelector(".tabs-container").style.display = "block";
+  elements.resultsContainer.querySelector(".summary-section").style.display = "block";
+
+  // Reset to themes tab
+  switchTab("themes");
 }
 
 // Show comments modal
@@ -741,9 +870,11 @@ function showComments(commentIds) {
   openModal("comments");
 }
 
-// Save API key
-async function saveApiKey() {
+// Save settings
+async function saveSettings() {
   const key = elements.apiKeyInput.value.trim();
+  const selectedLanguage = elements.languageSelect.value;
+  const context = elements.personalContextInput.value.trim();
 
   if (!key) {
     elements.apiKeyStatus.textContent = "Please enter an API key";
@@ -752,14 +883,22 @@ async function saveApiKey() {
   }
 
   try {
-    await chrome.storage.local.set({ apiKey: key });
+    await chrome.storage.local.set({
+      apiKey: key,
+      language: selectedLanguage,
+      personalContext: context,
+    });
+
     apiKey = key;
+    language = selectedLanguage;
+    personalContext = context;
+
     updateApiKeyStatus(true);
     closeModal("apiKey");
-    console.log("HN Distill: API key saved");
+    console.log("HN Distill: Settings saved", { language, hasPersonalContext: !!personalContext });
   } catch (error) {
-    console.error("HN Distill: Error saving API key:", error);
-    elements.apiKeyStatus.textContent = "Error saving API key";
+    console.error("HN Distill: Error saving settings:", error);
+    elements.apiKeyStatus.textContent = "Error saving settings";
     elements.apiKeyStatus.style.color = "var(--color-error)";
   }
 }
@@ -806,7 +945,10 @@ function showError(message) {
 function openModal(type) {
   if (type === "apiKey") {
     elements.apiKeyModal.style.display = "flex";
+    // Populate with current values (keep API key masked by not pre-filling)
     elements.apiKeyInput.value = "";
+    elements.languageSelect.value = language;
+    elements.personalContextInput.value = personalContext;
     elements.apiKeyInput.focus();
   } else if (type === "comments") {
     elements.commentsModal.style.display = "flex";

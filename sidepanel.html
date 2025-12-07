@@ -55,11 +55,69 @@
         <ul id="global-learnings" class="learning-list"></ul>
       </section>
 
-      <!-- Themes Section -->
-      <section class="themes-section">
-        <h2 class="section-title">Themes</h2>
-        <div id="themes-list" class="themes-list"></div>
-      </section>
+      <!-- Tab Navigation -->
+      <div class="tabs-container">
+        <nav class="tabs-nav">
+          <button class="tab-btn active" data-tab="themes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h7"/>
+            </svg>
+            Themes
+          </button>
+          <button class="tab-btn" data-tab="critical" id="critical-tab-btn" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            Critical Thinking
+          </button>
+        </nav>
+
+        <!-- Themes Tab Panel -->
+        <div class="tab-panel active" data-panel="themes">
+          <div id="themes-list" class="themes-list"></div>
+        </div>
+
+        <!-- Critical Thinking Tab Panel -->
+        <div class="tab-panel" data-panel="critical" id="critical-thinking-panel">
+          <div class="critical-thinking-list">
+            <div class="critical-item">
+              <div class="critical-header">
+                <span class="critical-icon">💥</span>
+                <h4 class="critical-label">What breaks this?</h4>
+              </div>
+              <div id="ct-breaks" class="critical-content"></div>
+            </div>
+            <div class="critical-item">
+              <div class="critical-header">
+                <span class="critical-icon">🔮</span>
+                <h4 class="critical-label">Non-obvious truth</h4>
+              </div>
+              <div id="ct-non-obvious" class="critical-content"></div>
+            </div>
+            <div class="critical-item">
+              <div class="critical-header">
+                <span class="critical-icon">🎭</span>
+                <h4 class="critical-label">Hidden assumptions</h4>
+              </div>
+              <div id="ct-assumptions" class="critical-content"></div>
+            </div>
+            <div class="critical-item">
+              <div class="critical-header">
+                <span class="critical-icon">🚧</span>
+                <h4 class="critical-label">New bottleneck</h4>
+              </div>
+              <div id="ct-bottleneck" class="critical-content"></div>
+            </div>
+            <div class="critical-item">
+              <div class="critical-header">
+                <span class="critical-icon">⚡</span>
+                <h4 class="critical-label">Leverage point</h4>
+              </div>
+              <div id="ct-leverage" class="critical-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Theme Detail View (Initially Hidden) -->
       <div id="theme-detail" class="theme-detail" style="display: none;">
@@ -105,24 +163,51 @@
     </div>
   </main>
 
-  <!-- API Key Modal -->
+  <!-- Settings Modal -->
   <div id="apiKeyModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content modal-settings">
       <div class="modal-header">
-        <h3 class="modal-title">API Key Configuration</h3>
+        <h3 class="modal-title">Settings</h3>
         <button id="closeApiKeyBtn" class="modal-close">×</button>
       </div>
       <div class="modal-body">
-        <label for="apiKeyInput" class="form-label">
-          Enter your Anthropic or OpenAI API key
-        </label>
-        <input
-          type="password"
-          id="apiKeyInput"
-          class="form-input"
-          placeholder="sk-ant-... or sk-..."
-        />
-        <p id="apiKeyStatus" class="form-hint">Not configured</p>
+        <div class="form-group">
+          <label for="apiKeyInput" class="form-label">API Key</label>
+          <input
+            type="password"
+            id="apiKeyInput"
+            class="form-input"
+            placeholder="sk-ant-... or sk-..."
+          />
+          <p id="apiKeyStatus" class="form-hint">Not configured</p>
+        </div>
+
+        <div class="form-group">
+          <label for="languageSelect" class="form-label">Output Language</label>
+          <select id="languageSelect" class="form-select">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+            <option value="pt">Português</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="personalContext" class="form-label">
+            Personal Context
+            <span class="form-label-hint">(optional)</span>
+          </label>
+          <textarea
+            id="personalContext"
+            class="form-textarea"
+            placeholder="E.g., 'I'm a backend engineer interested in distributed systems and Rust'"
+            rows="3"
+          ></textarea>
+          <p class="form-hint">Help the AI tailor insights to your interests and expertise level</p>
+        </div>
       </div>
       <div class="modal-footer">
         <button id="saveApiKeyBtn" class="btn-primary">Save</button>

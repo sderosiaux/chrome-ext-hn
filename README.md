@@ -6,12 +6,14 @@ HN Distill is a Chrome extension that analyzes Hacker News comment threads and d
 
 ## Features
 
-- **AI-Powered Analysis**: Uses Claude AI to analyze and synthesize HN comment threads
+- **AI-Powered Analysis**: Uses Claude or OpenAI to analyze and synthesize HN comment threads
 - **Theme Clustering**: Automatically groups related discussions into coherent themes
 - **Key Learnings**: Extracts actionable insights from each conversation
-- **Technical Glossary**: Defines domain-specific terms and jargon (with French translations)
+- **Critical Thinking**: Challenges assumptions and surfaces non-obvious insights
+- **Technical Glossary**: Defines domain-specific terms and jargon
 - **Curated Resources**: Surfaces relevant links and references from the discussion
-- **Auto-Analyze**: Optionally analyze threads automatically when you visit them
+- **Multi-Language**: Output in English, French, Spanish, German, Portuguese, Chinese, or Japanese
+- **Personal Context**: Tailor insights to your interests and expertise level
 - **Thread Caching**: Saves analysis results for instant retrieval
 
 ## Installation
@@ -60,23 +62,24 @@ Your API key is stored locally in Chrome's storage and never leaves your browser
    - Links to related resources
    - Supporting comments for each theme
 
-### Auto-Analyze Mode
-
-Enable auto-analyze to automatically analyze threads when you visit them:
-
-1. Click the "Distill" button
-2. Click the lightning bolt icon to toggle auto-analyze
-3. Future threads will be analyzed automatically when opened
-
 ### Theme Deep Dive
 
 Click on any theme card to see:
 - **Why it matters**: Context and relevance
 - **Key points**: Main ideas and takeaways
-- **Glossary**: Technical terms explained in English and French
+- **Glossary**: Technical terms explained
 - **Beyond the basics**: Advanced concepts and nuances
 - **Links**: Curated resources from the discussion
 - **Comments**: Original comments supporting this theme
+
+### Critical Thinking Tab
+
+A dedicated tab provides deeper strategic analysis:
+- **What breaks this?**: Failure modes and edge cases
+- **Non-obvious truth**: Counterintuitive insights
+- **Hidden assumptions**: Unstated premises and tradeoffs
+- **New bottleneck**: Second-order effects
+- **Leverage point**: Asymmetric opportunities
 
 ## Architecture
 

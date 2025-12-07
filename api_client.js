@@ -67,7 +67,10 @@ class ClaudeApiClient extends ApiClient {
   async call(prompt, options = {}) {
     this.validateApiKey();
 
-    const requestBody = this.prepareRequestBody(prompt, options);
+    const requestBody = {
+      ...this.prepareRequestBody(prompt, options),
+      max_tokens: options.maxTokens || 8192,
+    };
     console.log("Claude API request:", requestBody);
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -95,7 +98,7 @@ class OpenAiApiClient extends ApiClient {
   constructor(options = {}) {
     super({
       ...options,
-      model: options.model || "gpt-5",
+      model: options.model || "gpt-5.1",
     });
   }
 
