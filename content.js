@@ -42,10 +42,10 @@
     const modal = document.createElement('div');
     modal.className = 'hn-distill-modal';
 
-    // Iframe to load sidepanel.html
+    // Iframe to load panel
     const iframe = document.createElement('iframe');
     iframe.className = 'hn-distill-iframe';
-    iframe.src = chrome.runtime.getURL('sidepanel.html');
+    iframe.src = chrome.runtime.getURL('panel.html');
     iframe.setAttribute('frameborder', '0');
 
     modal.appendChild(iframe);

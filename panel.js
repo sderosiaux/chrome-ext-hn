@@ -1,4 +1,4 @@
-// sidepanel.js - Main logic for the HN Distill side panel
+// panel.js - Main logic for the HN Distill panel
 
 import { ApiClientFactory } from "./api_client.js";
 import { buildHNAnalysisPrompt } from "./prompts.js";
@@ -467,20 +467,43 @@ function renderCriticalContent(element, text) {
     return;
   }
 
-  // Check if text contains bullet points (lines starting with - or •)
-  const lines = text.split("\n").filter((line) => line.trim());
-  const hasBullets = lines.some((line) => /^\s*[-•]\s/.test(line));
+  // Try different list formats
+  let items = [];
 
-  if (hasBullets) {
-    // Parse as bullet list
+  // Format 1: Numbered items separated by semicolons: "1) ... ; 2) ... ; 3) ..."
+  const semicolonNumbered = text.match(/\d+\)\s*[^;]+/g);
+  if (semicolonNumbered && semicolonNumbered.length > 1) {
+    items = semicolonNumbered.map((item) => item.replace(/^\d+\)\s*/, "").trim());
+  }
+
+  // Format 2: Lines starting with - or •
+  if (items.length === 0) {
+    const lines = text.split("\n").filter((line) => line.trim());
+    const hasBullets = lines.some((line) => /^\s*[-•]\s/.test(line));
+    if (hasBullets) {
+      items = lines
+        .map((line) => line.replace(/^\s*[-•]\s*/, "").trim())
+        .filter((line) => line);
+    }
+  }
+
+  // Format 3: Lines starting with numbers "1. ..." or "1) ..."
+  if (items.length === 0) {
+    const lines = text.split("\n").filter((line) => line.trim());
+    const hasNumbered = lines.some((line) => /^\s*\d+[.)]\s/.test(line));
+    if (hasNumbered) {
+      items = lines
+        .map((line) => line.replace(/^\s*\d+[.)]\s*/, "").trim())
+        .filter((line) => line);
+    }
+  }
+
+  if (items.length > 0) {
     const ul = document.createElement("ul");
-    lines.forEach((line) => {
-      const cleanLine = line.replace(/^\s*[-•]\s*/, "").trim();
-      if (cleanLine) {
-        const li = document.createElement("li");
-        li.textContent = cleanLine;
-        ul.appendChild(li);
-      }
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      ul.appendChild(li);
     });
     element.innerHTML = "";
     element.appendChild(ul);

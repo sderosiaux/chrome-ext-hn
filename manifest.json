@@ -29,12 +29,14 @@
 
   "web_accessible_resources": [{
     "resources": [
-      "sidepanel.html",
-      "sidepanel.js",
-      "sidepanel.css",
+      "panel.html",
+      "panel.js",
+      "panel.css",
       "design-system.css",
       "api_client.js",
-      "prompts.js"
+      "prompts.js",
+      "markdown.js",
+      "data.js"
     ],
     "matches": ["https://news.ycombinator.com/*"]
   }],
