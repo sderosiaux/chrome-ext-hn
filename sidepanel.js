@@ -3,6 +3,10 @@
 import { ApiClientFactory } from "./api_client.js";
 import { buildHNAnalysisPrompt } from "./prompts.js";
 
+// Constants
+const MIN_COMMENT_LENGTH = 40;
+const MAX_COMMENTS = 500;
+
 // Global state
 let apiKey = null;
 let language = "en";
@@ -557,13 +561,13 @@ function processThreadData(rawData) {
 
   // Filter out very short comments and deleted/dead ones
   const filteredComments = allComments.filter((comment) => {
-    if (!comment.text || comment.text.length < 40) return false;
+    if (!comment.text || comment.text.length < MIN_COMMENT_LENGTH) return false;
     if (comment.deleted || comment.dead) return false;
     return true;
   });
 
-  // Limit to 500 comments to avoid token limits
-  const limitedComments = filteredComments.slice(0, 500);
+  // Limit comments to avoid token limits
+  const limitedComments = filteredComments.slice(0, MAX_COMMENTS);
 
   // Map to simpler structure
   const comments = limitedComments.map((comment) => ({
@@ -872,11 +876,14 @@ function showComments(commentIds) {
 
 // Save settings
 async function saveSettings() {
-  const key = elements.apiKeyInput.value.trim();
+  const newKey = elements.apiKeyInput.value.trim();
   const selectedLanguage = elements.languageSelect.value;
   const context = elements.personalContextInput.value.trim();
 
-  if (!key) {
+  // Use new key if provided, otherwise keep existing
+  const keyToSave = newKey || apiKey;
+
+  if (!keyToSave) {
     elements.apiKeyStatus.textContent = "Please enter an API key";
     elements.apiKeyStatus.style.color = "var(--color-error)";
     return;
@@ -884,12 +891,12 @@ async function saveSettings() {
 
   try {
     await chrome.storage.local.set({
-      apiKey: key,
+      apiKey: keyToSave,
       language: selectedLanguage,
       personalContext: context,
     });
 
-    apiKey = key;
+    apiKey = keyToSave;
     language = selectedLanguage;
     personalContext = context;
 
@@ -947,9 +954,18 @@ function openModal(type) {
     elements.apiKeyModal.style.display = "flex";
     // Populate with current values (keep API key masked by not pre-filling)
     elements.apiKeyInput.value = "";
+    elements.apiKeyInput.placeholder = apiKey
+      ? "Leave empty to keep current key"
+      : "sk-ant-... or sk-...";
     elements.languageSelect.value = language;
     elements.personalContextInput.value = personalContext;
-    elements.apiKeyInput.focus();
+
+    // Focus on language if key already configured, otherwise on key input
+    if (apiKey) {
+      elements.languageSelect.focus();
+    } else {
+      elements.apiKeyInput.focus();
+    }
   } else if (type === "comments") {
     elements.commentsModal.style.display = "flex";
   }

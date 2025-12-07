@@ -1,5 +1,8 @@
 // api_client.js - API client for LLM providers (Claude & OpenAI)
 
+// Constants
+const DEFAULT_MAX_TOKENS = 8192;
+
 // Abstract base class for API clients
 class ApiClient {
   constructor(options = {}) {
@@ -69,7 +72,7 @@ class ClaudeApiClient extends ApiClient {
 
     const requestBody = {
       ...this.prepareRequestBody(prompt, options),
-      max_tokens: options.maxTokens || 8192,
+      max_tokens: options.maxTokens || DEFAULT_MAX_TOKENS,
     };
     console.log("Claude API request:", requestBody);
 
