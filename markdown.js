@@ -110,13 +110,18 @@ function generateThemeMarkdown(theme) {
   }
 
   // Beyond basic
-  if (theme.beyond_basic && theme.beyond_basic.length > 0) {
-    lines.push("**Beyond the Basics:**");
-    lines.push("");
-    theme.beyond_basic.forEach((text) => {
-      lines.push(text);
+  if (theme.beyond_basic) {
+    const beyondBasic = Array.isArray(theme.beyond_basic)
+      ? theme.beyond_basic
+      : [theme.beyond_basic];
+    if (beyondBasic.length > 0) {
+      lines.push("**Beyond the Basics:**");
       lines.push("");
-    });
+      beyondBasic.forEach((text) => {
+        lines.push(text);
+        lines.push("");
+      });
+    }
   }
 
   // Links
