@@ -1,236 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>HN Distill</title>
   <link rel="stylesheet" href="design-system.css">
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-  <!-- Header -->
   <header class="header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1 id="header-title" class="header-title">HN Distill</h1>
+    <div class="title-row">
+      <h1 id="thread-title">Discussion HN</h1>
+      <button id="settings-button" class="icon-button" title="Paramètres" aria-label="Paramètres">⚙</button>
+      <button id="close-button" class="icon-button" title="Fermer" aria-label="Fermer">×</button>
+    </div>
+    <div class="toolbar">
+      <nav aria-label="Lecture" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="reader" id="tab-summary" data-mode="summary">Synthèse</button>
+        <button role="tab" aria-selected="false" aria-controls="reader" id="tab-qa" data-mode="qa" tabindex="-1">Questions-réponses</button>
+        <button role="tab" aria-selected="false" aria-controls="reader" id="tab-sources" data-mode="sources" tabindex="-1">Discussion</button>
+      </nav>
+      <div id="detail-controls" class="segments" role="group" aria-label="Profondeur de lecture">
+        <button data-detail="short" aria-pressed="false">Courte</button>
+        <button data-detail="detailed" aria-pressed="true">Détaillée</button>
+        <button data-detail="deep" aria-pressed="false">Approfondie</button>
       </div>
-      <div class="header-actions">
-        <button id="copyMarkdownBtn" class="icon-btn" title="Copy as Markdown" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-            <path d="M16 3h4v4"/>
-            <path d="M21 3l-9 9"/>
-          </svg>
-        </button>
-        <button id="apiKeyBtn" class="icon-btn" title="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
+      <div class="actions">
+        <button id="stop-button" hidden>Arrêter</button>
+        <select id="copy-format" aria-label="Format de copie"><option value="markdown">Markdown</option><option value="text">Texte</option></select>
+        <button id="copy-button" disabled>Copier</button>
       </div>
     </div>
   </header>
-
-  <!-- Main Content -->
-  <main id="main-content" class="main-content">
-    <!-- Loading State -->
-    <div id="loading-state" class="loading-state" style="display: none;">
-      <div class="loading-spinner"></div>
-      <p class="loading-text">Analyzing thread and extracting insights...</p>
-    </div>
-
-    <!-- Error State -->
-    <div id="error-state" class="error-state" style="display: none;">
-      <div class="error-icon">⚠️</div>
-      <p id="error-message" class="error-message"></p>
-      <button id="retry-btn" class="btn-secondary">Try Again</button>
-    </div>
-
-    <!-- Results Container -->
-    <div id="results-container" style="display: none;">
-
-      <!-- Global Summary Section -->
-      <section class="summary-section">
-        <h2 class="section-title">What you can learn from this thread</h2>
-        <ul id="global-learnings" class="learning-list"></ul>
-      </section>
-
-      <!-- Tab Navigation -->
-      <div class="tabs-container">
-        <nav class="tabs-nav">
-          <button class="tab-btn active" data-tab="themes">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6h16M4 12h16M4 18h7"/>
-            </svg>
-            Themes
-          </button>
-          <button class="tab-btn" data-tab="critical" id="critical-tab-btn" style="display: none;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-            Critical Thinking
-          </button>
-        </nav>
-
-        <!-- Themes Tab Panel -->
-        <div class="tab-panel active" data-panel="themes">
-          <div id="themes-list" class="themes-list"></div>
-        </div>
-
-        <!-- Critical Thinking Tab Panel -->
-        <div class="tab-panel" data-panel="critical" id="critical-thinking-panel">
-          <div class="critical-thinking-list">
-            <div class="critical-item">
-              <div class="critical-header">
-                <span class="critical-icon">💥</span>
-                <h4 class="critical-label">What breaks this?</h4>
-              </div>
-              <div id="ct-breaks" class="critical-content"></div>
-            </div>
-            <div class="critical-item">
-              <div class="critical-header">
-                <span class="critical-icon">🔮</span>
-                <h4 class="critical-label">Non-obvious truth</h4>
-              </div>
-              <div id="ct-non-obvious" class="critical-content"></div>
-            </div>
-            <div class="critical-item">
-              <div class="critical-header">
-                <span class="critical-icon">🎭</span>
-                <h4 class="critical-label">Hidden assumptions</h4>
-              </div>
-              <div id="ct-assumptions" class="critical-content"></div>
-            </div>
-            <div class="critical-item">
-              <div class="critical-header">
-                <span class="critical-icon">🚧</span>
-                <h4 class="critical-label">New bottleneck</h4>
-              </div>
-              <div id="ct-bottleneck" class="critical-content"></div>
-            </div>
-            <div class="critical-item">
-              <div class="critical-header">
-                <span class="critical-icon">⚡</span>
-                <h4 class="critical-label">Leverage point</h4>
-              </div>
-              <div id="ct-leverage" class="critical-content"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Theme Detail View (Initially Hidden) -->
-      <div id="theme-detail" class="theme-detail" style="display: none;">
-        <button id="back-to-themes" class="back-button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5m0 0l7 7m-7-7l7-7"/>
-          </svg>
-          Back to themes
-        </button>
-
-        <div class="theme-detail-content">
-          <h2 id="theme-detail-title" class="theme-detail-title"></h2>
-          <p id="theme-detail-why" class="theme-detail-why"></p>
-
-          <div class="theme-detail-section">
-            <h3 class="theme-detail-section-title">What you learn</h3>
-            <ul id="theme-detail-points" class="learning-list"></ul>
-          </div>
-
-          <div id="theme-glossary-section" class="theme-detail-section" style="display: none;">
-            <h3 class="theme-detail-section-title">Terms for your glossary</h3>
-            <dl id="theme-detail-glossary" class="glossary-list"></dl>
-          </div>
-
-          <div id="theme-beyond-section" class="theme-detail-section" style="display: none;">
-            <h3 class="theme-detail-section-title">Beyond the basics</h3>
-            <div id="theme-detail-beyond" class="beyond-list"></div>
-          </div>
-
-          <div id="theme-links-section" class="theme-detail-section" style="display: none;">
-            <h3 class="theme-detail-section-title">Links</h3>
-            <ul id="theme-detail-links" class="links-list"></ul>
-          </div>
-
-          <div id="theme-comments-section" class="theme-detail-section">
-            <button id="show-comments-btn" class="btn-secondary btn-sm">
-              View source comments (<span id="comment-count">0</span>)
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </div>
+  <main id="main-content">
+    <div id="notice" role="status" hidden><span id="notice-text"></span><button id="retry-button" hidden>Réessayer</button></div>
+    <div id="progress" role="status" hidden><span id="progress-label"></span><span id="progress-time" aria-hidden="true"></span></div>
+    <div id="empty" hidden><h2>Comprendre cette discussion</h2><p>Relie les arguments, les objections et les expériences à leurs sources.</p><button id="configure-button" class="primary">Configurer ma clé API</button></div>
+    <article id="reader" role="tabpanel" aria-labelledby="tab-summary" tabindex="0"></article>
   </main>
-
-  <!-- Settings Modal -->
-  <div id="apiKeyModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content modal-settings">
-      <div class="modal-header">
-        <h3 class="modal-title">Settings</h3>
-        <button id="closeApiKeyBtn" class="modal-close">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="apiKeyInput" class="form-label">API Key</label>
-          <input
-            type="password"
-            id="apiKeyInput"
-            class="form-input"
-            placeholder="sk-ant-... or sk-..."
-          />
-          <p id="apiKeyStatus" class="form-hint">Not configured</p>
-        </div>
-
-        <div class="form-group">
-          <label for="languageSelect" class="form-label">Output Language</label>
-          <select id="languageSelect" class="form-select">
-            <option value="en">English</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="de">Deutsch</option>
-            <option value="pt">Português</option>
-            <option value="zh">中文</option>
-            <option value="ja">日本語</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="personalContext" class="form-label">
-            Personal Context
-            <span class="form-label-hint">(optional)</span>
-          </label>
-          <textarea
-            id="personalContext"
-            class="form-textarea"
-            placeholder="E.g., 'I'm a backend engineer interested in distributed systems and Rust'"
-            rows="3"
-          ></textarea>
-          <p class="form-hint">Help the AI tailor insights to your interests and expertise level</p>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="saveApiKeyBtn" class="btn-primary">Save</button>
-        <button id="cancelApiKeyBtn" class="btn-secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Source Comments Modal -->
-  <div id="commentsModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content modal-large">
-      <div class="modal-header">
-        <h3 class="modal-title">Source Comments</h3>
-        <button id="closeCommentsBtn" class="modal-close">×</button>
-      </div>
-      <div class="modal-body">
-        <div id="comments-list" class="comments-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="prompts.js"></script>
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <div class="dialog-heading"><h2 id="settings-title">Paramètres</h2><button type="button" id="cancel-settings" class="icon-button" aria-label="Fermer les paramètres">×</button></div>
+      <label for="provider">Modèle</label>
+      <select id="provider"><option value="openai">Luna · OpenAI</option><option value="claude">Sonnet 4.5 · Anthropic</option></select>
+      <label for="api-key">Clé API</label>
+      <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+      <label class="checkbox"><input type="checkbox" id="remember-key"> Conserver la clé sur cet appareil</label>
+      <p class="hint">Sinon, la clé reste disponible jusqu’à la fermeture du navigateur. Aucun envoi vers Chrome Sync.</p>
+      <label for="language">Langue des notes</label>
+      <select id="language"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="zh">中文</option><option value="ja">日本語</option></select>
+      <label for="personal-context">Ce qui m’aide à comprendre <span class="hint">(facultatif)</span></label>
+      <textarea id="personal-context" rows="3" placeholder="Mon expérience, les notions qui me sont familières…"></textarea>
+      <p id="settings-error" role="alert" hidden></p>
+      <div class="settings-tools"><button type="button" id="forget-key">Effacer cette clé</button><button type="button" id="clear-cache">Effacer les notes enregistrées</button></div>
+      <div class="dialog-actions"><button type="submit" class="primary">Enregistrer</button></div>
+    </form>
+  </dialog>
   <script type="module" src="panel.js"></script>
 </body>
 </html>

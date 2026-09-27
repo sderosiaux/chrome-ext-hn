@@ -1,140 +1,32 @@
-// markdown.js - Markdown generation for analysis results
+import { threadUrl, sourceMap } from './data.js';
+import { kindLabel } from './render.js';
 
-/**
- * Generate markdown from analysis results
- * @param {Object} threadData - Thread data with title and thread_id
- * @param {Object} analysisResult - Analysis result with global_summary, critical_thinking, themes
- * @returns {string} Markdown formatted string
- */
-export function generateMarkdown(threadData, analysisResult) {
-  const lines = [];
-
-  // Title with source link
-  lines.push(`# ${threadData.title}`);
-  lines.push("");
-  lines.push(`> Source: [Hacker News Thread](https://news.ycombinator.com/item?id=${threadData.thread_id})`);
-  lines.push("");
-
-  // Global summary
-  lines.push("## Key Learnings");
-  lines.push("");
-  analysisResult.global_summary.key_learnings.forEach((learning) => {
-    lines.push(`- ${learning}`);
-  });
-  lines.push("");
-
-  // Critical Thinking
-  if (analysisResult.critical_thinking) {
-    lines.push(...generateCriticalThinkingMarkdown(analysisResult.critical_thinking));
-  }
-
-  // Themes
-  lines.push("## Themes");
-  lines.push("");
-
-  analysisResult.themes.forEach((theme) => {
-    lines.push(...generateThemeMarkdown(theme));
-  });
-
-  return lines.join("\n");
-}
-
-/**
- * Generate markdown for critical thinking section
- */
-function generateCriticalThinkingMarkdown(ct) {
-  const lines = [];
-  lines.push("## Critical Thinking");
-  lines.push("");
-
-  if (ct.what_breaks_this) {
-    lines.push("### What breaks this?");
-    lines.push(ct.what_breaks_this);
-    lines.push("");
-  }
-
-  if (ct.non_obvious_truth) {
-    lines.push("### Non-obvious truth");
-    lines.push(ct.non_obvious_truth);
-    lines.push("");
-  }
-
-  if (ct.hidden_assumptions) {
-    lines.push("### Hidden assumptions");
-    lines.push(ct.hidden_assumptions);
-    lines.push("");
-  }
-
-  if (ct.new_bottleneck) {
-    lines.push("### New bottleneck");
-    lines.push(ct.new_bottleneck);
-    lines.push("");
-  }
-
-  if (ct.leverage_point) {
-    lines.push("### Leverage point");
-    lines.push(ct.leverage_point);
-    lines.push("");
-  }
-
-  return lines;
-}
-
-/**
- * Generate markdown for a single theme
- */
-function generateThemeMarkdown(theme) {
-  const lines = [];
-
-  lines.push(`### ${theme.title}`);
-  lines.push("");
-  lines.push(`> ${theme.why_it_matters}`);
-  lines.push("");
-
-  // Key points
-  lines.push("**Key Points:**");
-  lines.push("");
-  theme.key_points.forEach((point) => {
-    lines.push(`- ${point}`);
-  });
-  lines.push("");
-
-  // Glossary
-  if (theme.glossary && theme.glossary.length > 0) {
-    lines.push("**Glossary:**");
-    lines.push("");
-    theme.glossary.forEach((entry) => {
-      lines.push(`- **${entry.term}**: ${entry.definition}`);
-    });
-    lines.push("");
-  }
-
-  // Beyond basic
-  if (theme.beyond_basic) {
-    const beyondBasic = Array.isArray(theme.beyond_basic)
-      ? theme.beyond_basic
-      : [theme.beyond_basic];
-    if (beyondBasic.length > 0) {
-      lines.push("**Beyond the Basics:**");
-      lines.push("");
-      beyondBasic.forEach((text) => {
-        lines.push(text);
-        lines.push("");
-      });
+const escape = (text) => String(text).replace(/[\\`*_{}\[\]()#+!<>|]/g, '\\$&');
+export function generateMarkdown(thread, analysis, { format = 'markdown', language = 'fr', partial = false } = {}) {
+  const md = format === 'markdown';
+  const plain = (s) => md ? escape(s) : s;
+  const heading = (level, text) => `${md ? '#'.repeat(level) + ' ' : ''}${plain(text)}`;
+  const sources = sourceMap(thread);
+  const out = [heading(1, thread.title), `${md ? '[Hacker News](' + threadUrl(thread.id) + ')' : threadUrl(thread.id)}`];
+  if (partial) out.push(language === 'fr' ? 'Notes incomplètes — génération interrompue.' : 'Incomplete notes — generation interrupted.');
+  if (!analysis) {
+    for (const item of [thread, ...thread.comments]) {
+      if (!item.text) continue;
+      out.push(heading(2, item.author || String(item.id)), plain(item.text), threadUrl(item.id));
+    }
+  } else {
+    for (const section of analysis.sections) {
+      out.push(heading(2, section.title));
+      for (const entry of section.entries) {
+        if (entry.title) out.push(heading(3, entry.title));
+        const kind = kindLabel(entry.kind, language);
+        out.push((kind ? `${plain(kind)} — ` : '') + plain(entry.text));
+        out.push(entry.sources.map((id) => {
+          const author = sources.get(id)?.author || id;
+          return md ? `[${escape(author)}](${threadUrl(id)})` : `${author}: ${threadUrl(id)}`;
+        }).join(' · '));
+      }
     }
   }
-
-  // Links
-  if (theme.links && theme.links.length > 0) {
-    lines.push("**Links:**");
-    lines.push("");
-    theme.links.forEach((link) => {
-      lines.push(`- [${link.label}](${link.url})`);
-    });
-    lines.push("");
-  }
-
-  return lines;
+  return out.join('\n\n') + '\n';
 }
-
-export default { generateMarkdown };

@@ -1,156 +1,61 @@
-// content.js - Injects overlay with iframe on HN pages
-(function() {
-  // Prevent multiple initializations
-  if (window.hnDistillInitialized) {
-    console.log('HN Distill: Already initialized, skipping');
-    return;
-  }
+(() => {
+  if (window.hnDistillInitialized) return;
   window.hnDistillInitialized = true;
-
-  console.log('HN Distill: Content script loaded');
-
-  let overlayVisible = false;
-  let overlayElement = null;
-  let iframeElement = null;
-
-  // Extract thread ID from URL
-  function getThreadId() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('id');
+  const id = new URL(location.href).searchParams.get('id');
+  if (location.pathname !== '/item' || !/^\d+$/.test(id || '')) return;
+  const extensionOrigin = chrome.runtime.getURL('').replace(/\/$/, '');
+  let session;
+  function close() {
+    if (!session?.dialog.open) return;
+    session.frame.contentWindow.postMessage({ action: 'closed', token: session.token }, extensionOrigin);
+    session.dialog.close();
+    session.focus?.focus();
   }
-
-  // Extract thread title from the page
-  function getThreadTitle() {
-    // Try to get the title from the HN page structure
-    const titleLine = document.querySelector('.titleline > a');
-    if (titleLine) {
-      return titleLine.textContent.trim();
-    }
-    // Fallback to page title (often includes " | Hacker News")
-    const pageTitle = document.title.replace(' | Hacker News', '').trim();
-    return pageTitle || 'Untitled';
+  function notifyOpen() {
+    if (session?.ready && session.dialog.open) session.frame.contentWindow.postMessage({ action: 'opened', token: session.token }, extensionOrigin);
   }
-
-  // Create overlay container
-  function createOverlay() {
-    // Overlay backdrop
-    const overlay = document.createElement('div');
-    overlay.id = 'hn-distill-overlay';
-    overlay.className = 'hn-distill-overlay';
-
-    // Modal container
-    const modal = document.createElement('div');
-    modal.className = 'hn-distill-modal';
-
-    // Iframe to load panel
-    const iframe = document.createElement('iframe');
-    iframe.className = 'hn-distill-iframe';
-    iframe.src = chrome.runtime.getURL('panel.html');
-    iframe.setAttribute('frameborder', '0');
-
-    modal.appendChild(iframe);
-    overlay.appendChild(modal);
-
-    // Click outside to close
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        hideOverlay();
-      }
-    });
-
-    // Escape key to close
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && overlayVisible) {
-        hideOverlay();
-      }
-    });
-
-    overlayElement = overlay;
-    iframeElement = iframe;
-
-    return overlay;
+  function open() {
+    if (!session) {
+      const host = document.createElement('div');
+      const root = host.attachShadow({ mode: 'closed' });
+      const style = document.createElement('style');
+      style.textContent = `:host{all:initial}dialog{box-sizing:border-box;padding:0;border:1px solid #e5e6e0;border-radius:12px;width:min(1120px,calc(100vw - 32px));height:calc(100dvh - 40px);max-width:none;max-height:none;background:#fff;box-shadow:0 25px 90px #282b2733;overflow:hidden}dialog::backdrop{background:#282b2752}iframe{display:block;width:100%;height:100%;border:0}@media(max-width:640px){dialog{width:calc(100vw - 12px);height:calc(100dvh - 24px);border-radius:8px}}`;
+      const dialog = document.createElement('dialog');
+      dialog.setAttribute('aria-label', 'Lecture de la discussion HN');
+      const frame = document.createElement('iframe');
+      frame.title = 'HN Distill'; frame.allow = 'clipboard-write';
+      const token = crypto.randomUUID();
+      session = { host, dialog, frame, token, ready: false };
+      dialog.append(frame); root.append(style, dialog); document.body.append(host);
+      chrome.runtime.sendMessage({ action: 'registerReader', token, threadId: id }).then((response) => {
+        if (!response?.ok) throw new Error('Impossible d’ouvrir Distill. Recharge la page HN.');
+        frame.src = chrome.runtime.getURL(`panel.html?threadId=${id}&token=${token}`);
+      }).catch(() => {
+        const error = document.createElement('p');
+        error.textContent = 'Impossible d’ouvrir Distill. Recharge la page HN et l’extension.';
+        error.style.cssText = 'padding:24px;font:16px system-ui;color:#282b27';
+        frame.replaceWith(error);
+      });
+      dialog.addEventListener('cancel', (event) => { event.preventDefault(); close(); });
+      dialog.addEventListener('click', (event) => {
+        const r = dialog.getBoundingClientRect();
+        if (event.target === dialog && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) close();
+      });
+    }
+    if (session.dialog.open) return;
+    session.focus = document.activeElement;
+    session.dialog.showModal(); session.frame.focus(); notifyOpen();
   }
-
-  // Show overlay
-  function showOverlay() {
-    if (!overlayElement) {
-      const overlay = createOverlay();
-      document.body.appendChild(overlay);
-    }
-
-    overlayElement.style.display = 'flex';
-    overlayVisible = true;
-    document.body.style.overflow = 'hidden'; // Prevent page scroll
-
-    // Send message to iframe to trigger auto-analyze
-    setTimeout(() => {
-      if (iframeElement && iframeElement.contentWindow) {
-        iframeElement.contentWindow.postMessage({ action: 'triggerAnalyze' }, '*');
-        console.log('HN Distill: Sent triggerAnalyze message to iframe');
-      }
-    }, 500); // Wait a bit for iframe to load
-
-    console.log('HN Distill: Overlay shown');
-  }
-
-  // Hide overlay
-  function hideOverlay() {
-    if (overlayElement) {
-      overlayElement.style.display = 'none';
-      overlayVisible = false;
-      document.body.style.overflow = ''; // Restore page scroll
-    }
-
-    console.log('HN Distill: Overlay hidden');
-  }
-
-  // Create and inject the floating button
-  function createDistillButton() {
-    const threadId = getThreadId();
-    if (!threadId) {
-      console.log('HN Distill: No thread ID found in URL');
-      return;
-    }
-
-    // Check if button already exists
-    if (document.getElementById('hn-distill-button')) {
-      return;
-    }
-
-    const button = document.createElement('button');
-    button.id = 'hn-distill-button';
-    button.className = 'hn-distill-fab';
-    button.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        <path d="M9 12h6m-6 4h6"/>
-      </svg>
-      <span>Distill</span>
-    `;
-
-    button.addEventListener('click', () => {
-      console.log('HN Distill: Button clicked');
-      showOverlay();
-    });
-
-    document.body.appendChild(button);
-    console.log('HN Distill: Button added to page');
-  }
-
-  // Listen for messages from the iframe (sidepanel)
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'getThreadId') {
-      const threadId = getThreadId();
-      const threadTitle = getThreadTitle();
-      sendResponse({ threadId, threadTitle });
-      return true;
-    }
+  window.addEventListener('message', (event) => {
+    if (!session || event.source !== session.frame.contentWindow || event.origin !== extensionOrigin || event.data?.token !== session.token) return;
+    if (event.data.action === 'ready') { session.ready = true; notifyOpen(); }
+    if (event.data.action === 'close') close();
   });
-
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', createDistillButton);
-  } else {
-    createDistillButton();
-  }
+  chrome.runtime.onMessage.addListener((message, sender) => {
+    if (sender.id === chrome.runtime.id && message.action === 'openReader') open();
+  });
+  const button = document.createElement('button');
+  button.id = 'hn-distill-button'; button.textContent = 'Distill';
+  button.title = 'Comprendre cette discussion'; button.addEventListener('click', open);
+  document.body.append(button);
 })();

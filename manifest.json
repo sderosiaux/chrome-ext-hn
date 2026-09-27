@@ -1,18 +1,21 @@
 {
   "manifest_version": 3,
   "name": "HN Distill",
-  "version": "1.0.0",
-  "description": "Distill Hacker News threads into actionable learning insights with AI-powered theme clustering",
+  "version": "2.0.0",
+  "minimum_chrome_version": "120",
+  "description": "Comprendre les discussions Hacker News : arguments, objections, questions-réponses et sources.",
 
   "permissions": [
     "activeTab",
-    "storage",
-    "scripting"
+    "storage"
   ],
 
   "host_permissions": [
     "https://news.ycombinator.com/*",
-    "https://hn.algolia.com/*"
+    "https://hn.algolia.com/*",
+    "https://hacker-news.firebaseio.com/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*"
   ],
 
   "background": {
@@ -36,7 +39,11 @@
       "api_client.js",
       "prompts.js",
       "markdown.js",
-      "data.js"
+      "data.js",
+      "analysis.js",
+      "generation.js",
+      "storage.js",
+      "render.js"
     ],
     "matches": ["https://news.ycombinator.com/*"]
   }],
