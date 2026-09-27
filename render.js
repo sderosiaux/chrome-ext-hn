@@ -55,8 +55,12 @@ function sourceComment(comment, sources, ancestors = new Set()) {
 function entryNode(entry, sources, language) {
   const node = element('div', '', 'entry');
   const label = kindLabel(entry.kind, language);
-  if (label) node.append(element('div', label, 'entry-kind'));
-  if (entry.title) node.append(element('h3', entry.title));
+  if (label || entry.title) {
+    const heading = element('h3');
+    if (label) heading.append(element('span', label + (entry.title ? ' : ' : ''), 'entry-kind'));
+    heading.append(entry.title);
+    node.append(heading);
+  }
   paragraphs(node, entry.text);
   const details = element('details', '', 'source-disclosure');
   details.lang = 'fr';

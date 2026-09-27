@@ -11,7 +11,7 @@ const renderer = createRenderer($('reader'));
 const params = new URLSearchParams(location.search);
 const threadId = params.get('threadId'), token = params.get('token');
 const views = new Map();
-let settings, thread, mode = 'summary', active = null, current = null, opened = false;
+let settings, thread, mode = 'summary', detail = 'short', active = null, current = null, opened = false;
 const abort = () => { active?.controller.abort(); clearInterval(active?.timer); active = null; $('stop-button').hidden = true; $('progress').hidden = true; };
 const notify = (text = '', retry = false) => {
   $('notice').hidden = !text; $('notice-text').textContent = text; $('retry-button').hidden = !retry;
@@ -26,7 +26,7 @@ function updateControls() {
     const selected = button.dataset.mode === mode;
     button.setAttribute('aria-selected', selected); button.tabIndex = selected ? 0 : -1;
   });
-  document.querySelectorAll('[data-detail]').forEach((button) => button.setAttribute('aria-pressed', button.dataset.detail === settings.detail));
+  document.querySelectorAll('[data-detail]').forEach((button) => button.setAttribute('aria-pressed', button.dataset.detail === detail));
   $('detail-controls').hidden = mode === 'sources';
   $('reader').setAttribute('aria-labelledby', `tab-${mode}`);
   $('copy-button').disabled = mode === 'sources' ? !thread : !current?.result;
@@ -42,7 +42,7 @@ async function showView({ refresh = false, retry = false } = {}) {
   }, 1000);
   const signal = job.controller.signal;
   const stillCurrent = () => { signal.throwIfAborted(); if (active !== job) throw new DOMException('Annulé', 'AbortError'); };
-  const selectedMode = mode, selectedSettings = { ...settings };
+  const selectedMode = mode, selectedSettings = { ...settings, detail };
   current = null; renderer.reset(); notify(); $('empty').hidden = true;
   $('stop-button').hidden = false; updateControls();
   try {
@@ -142,13 +142,10 @@ document.querySelector('[role="tablist"]').addEventListener('keydown', (event) =
   i = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (i + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
   tabs[i].focus(); tabs[i].click();
 });
-document.querySelectorAll('[data-detail]').forEach((button) => button.addEventListener('click', async () => {
-  if (!settings || settings.detail === button.dataset.detail) return;
-  settings.detail = button.dataset.detail;
+document.querySelectorAll('[data-detail]').forEach((button) => button.addEventListener('click', () => {
+  if (!settings || detail === button.dataset.detail) return;
+  detail = button.dataset.detail;
   showView();
-  // Detail alone does not rewrite keys or other settings.
-  try { await chrome.storage.local.set({ settings: { provider: settings.provider, language: settings.language, detail: settings.detail, personalContext: settings.personalContext } }); }
-  catch { notify('Ce niveau de lecture n’a pas pu être enregistré.'); }
 }));
 $('settings-form').addEventListener('submit', async (event) => {
   event.preventDefault();

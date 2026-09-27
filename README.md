@@ -16,7 +16,7 @@ Aucune compilation, aucun serveur et aucune dépendance à installer.
 - **Synthèse** : organisation adaptée au contenu, sans nombre imposé de thèmes. Les témoignages, objections et interprétations restent distingués.
 - **Questions-réponses** : un parcours pédagogique par sujet, sans quota de questions. Les positions opposées sont expliquées dans leur contexte.
 - **Discussion** : le post initial et les commentaires d’origine, avec accès aux messages parents et aux liens cités.
-- **Courte / Détaillée / Approfondie** : profondeur des explications. Le niveau ne fixe pas un nombre de questions.
+- **Courte / Approfondie** : chaque nouvelle discussion commence en **Courte** pour un premier aperçu. **Approfondie** développe les raisonnements, exemples et objections, uniquement sur demande ; le choix reste local au fil ouvert. Le niveau règle la profondeur des explications, sans fixer un nombre de questions.
 - **Sources** sous chaque idée : références vérifiées contre les identifiants fournis au modèle. Elles ouvrent les commentaires sur place ou sur HN. Cette validation ne constitue pas une vérification indépendante de la véracité des propos.
 - Copie en Markdown ou texte, avec références par idée. Les notes interrompues sont explicitement marquées comme incomplètes.
 

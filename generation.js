@@ -1,7 +1,7 @@
 import { partitionThread, sourceMap } from './data.js';
 import { buildHNAnalysisPrompt } from './prompts.js';
 import { generate } from './api_client.js';
-import { partialAnalysis, validateAnalysis } from './analysis.js';
+import { AnalysisError, partialAnalysis, validateAnalysis } from './analysis.js';
 
 export async function analyzeThread({ thread, settings, mode, signal, onProgress, onPartial }) {
   const all = sourceMap(thread);
@@ -19,25 +19,31 @@ export async function analyzeThread({ thread, settings, mode, signal, onProgress
   const finalLabel = mode === 'qa' ? 'Rédaction des questions-réponses' : 'Rédaction de la synthèse';
   const run = async (input, evidence, sources, { label = finalLabel, prefix = [], preview = true } = {}) => {
     let last = 0;
+    const outputMode = evidence ? 'summary' : mode;
     onProgress(`${label} · en attente du modèle…`);
     try {
-      const text = await generate({ settings, signal,
+      const text = await generate({ settings, signal, mode: outputMode,
         prompt: buildHNAnalysisPrompt(thread, settings, mode, input, evidence),
         onDelta: (text) => {
           if (Date.now() - last < 180) return;
           last = Date.now();
-          const partial = partialAnalysis(text);
-          const count = partial.sections.reduce((n, s) => n + s.entries.length, 0);
+          const valid = validateAnalysis(partialAnalysis(text), sources, outputMode, { preview: true });
+          const count = valid.sections.reduce((n, s) => n + s.entries.length, 0);
           onProgress(count ? `${label} · ${count} ${mode === 'qa' && !evidence ? 'réponses' : 'idées'} reçues` : `${label} · le modèle rédige…`);
           if (count) {
-            // Preparatory streams need the same repetition/reference checks as the final one.
-            const valid = validateAnalysis(partial, sources, evidence ? 'summary' : mode);
             if (preview) onPartial({ sections: [...prefix, ...valid.sections] }, { provisional: evidence });
           }
         },
       });
       signal.throwIfAborted();
-      return validateAnalysis(JSON.parse(text), sources, evidence ? 'summary' : mode);
+      let parsed;
+      try { parsed = JSON.parse(text); }
+      catch {
+        const lastValid = validateAnalysis(partialAnalysis(text), sources, outputMode, { preview: true });
+        throw new AnalysisError('La réponse s’est terminée avec un document incomplet.' +
+          (lastValid.sections.length ? ' Les passages valides restent disponibles.' : ''), lastValid);
+      }
+      return validateAnalysis(parsed, sources, outputMode);
     } catch (error) {
       if (evidence && error.partial) {
         error.partial = preview ? { sections: [...prefix, ...error.partial.sections] } : null;

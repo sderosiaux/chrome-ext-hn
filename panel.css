@@ -24,7 +24,10 @@ main { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; paddi
 #reader h3 { font-size: 17px; font-weight: 650; line-height: 1.5; margin: 0 0 8px; }
 #reader p { margin: 0 0 12px; }
 .entry + .entry { margin-top: 24px; }
-.entry-kind { font-size: 12px; color: var(--accent); margin-bottom: 4px; }
+.entry-kind { color: var(--accent); }
+.entry > p:last-of-type { margin-bottom: 0; }
+.entry > .source-disclosure { margin-top: 4px; }
+.entry > .source-disclosure > summary { margin-left: auto; }
 .source-disclosure { font-size: 13px; line-height: 1.6; margin: 10px 0 0; }
 summary { cursor: pointer; color: var(--muted); width: fit-content; }
 summary:hover { color: var(--accent); }

@@ -10,7 +10,7 @@ export function initializeStorage() {
     if (!old.settings) {
       const provider = old.apiKey?.startsWith('sk-ant-') ? 'claude' : 'openai';
       migration.settings = {
-        provider, language: 'fr', personalContext: old.personalContext || '', detail: 'detailed',
+        provider, language: 'fr', personalContext: old.personalContext || '',
       };
       if (old.apiKey && !old.keys) migration.keys = { [provider]: old.apiKey };
     } else if (old.localeRevision !== 1) {
@@ -25,18 +25,20 @@ export function initializeStorage() {
 export async function getSettings() {
   await initializeStorage();
   const [local, session] = await Promise.all([chrome.storage.local.get(['settings', 'keys']), chrome.storage.session.get('keys')]);
-  const settings = { provider: 'openai', language: 'fr', detail: 'detailed', personalContext: '', ...local.settings };
+  const settings = { provider: 'openai', language: 'fr', personalContext: '', ...local.settings };
+  // Reading depth belongs to the current discussion, not persisted preferences.
+  delete settings.detail;
   const keys = { ...local.keys, ...session.keys };
   return { ...settings, keys, apiKey: keys[settings.provider] || '', rememberKey: Boolean(local.keys?.[settings.provider]), remembered: local.keys || {} };
 }
 export async function saveSettings(settings) {
   await initializeStorage();
-  const { provider, language, detail, personalContext, apiKey, rememberKey } = settings;
+  const { provider, language, personalContext, apiKey, rememberKey } = settings;
   const [local, session] = await Promise.all([chrome.storage.local.get('keys'), chrome.storage.session.get('keys')]);
   const persisted = { ...local.keys }, temporary = { ...session.keys };
   delete persisted[provider]; delete temporary[provider];
   if (apiKey) (rememberKey ? persisted : temporary)[provider] = apiKey;
-  await chrome.storage.local.set({ settings: { provider, language, detail, personalContext }, keys: persisted });
+  await chrome.storage.local.set({ settings: { provider, language, personalContext }, keys: persisted });
   await chrome.storage.session.set({ keys: temporary });
   return getSettings();
 }

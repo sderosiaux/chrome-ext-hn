@@ -1,4 +1,4 @@
-import { ANALYSIS_SCHEMA } from './analysis.js';
+import { analysisSchema } from './analysis.js';
 
 export const MODELS = { openai: 'gpt-6-luna', claude: 'claude-sonnet-4-5' };
 export class GenerationError extends Error {
@@ -36,18 +36,19 @@ function delay(ms, signal) {
   });
 }
 
-export async function generate({ settings, prompt, signal, onDelta = () => {} }) {
+export async function generate({ settings, prompt, signal, mode = 'summary', onDelta = () => {} }) {
   const claude = settings.provider === 'claude';
+  const schema = analysisSchema(mode);
   const key = settings.apiKey;
   if (!key) throw new Error('Ajoute une clé API dans les paramètres.');
   const body = claude ? {
     model: MODELS.claude, stream: true, max_tokens: 64000,
     system: prompt.instructions, messages: [{ role: 'user', content: prompt.input }],
-    output_config: { format: { type: 'json_schema', schema: ANALYSIS_SCHEMA } },
+    output_config: { format: { type: 'json_schema', schema } },
   } : {
     model: MODELS.openai, stream: true, store: false, reasoning: { effort: 'none' },
     instructions: prompt.instructions, input: [{ role: 'user', content: prompt.input }],
-    text: { format: { type: 'json_schema', name: 'hn_discussion', strict: true, schema: ANALYSIS_SCHEMA } },
+    text: { format: { type: 'json_schema', name: mode === 'qa' ? 'hn_questions' : 'hn_discussion', strict: true, schema } },
   };
   const timeout = new AbortController();
   const combined = AbortSignal.any([signal, timeout.signal]);
