@@ -22,6 +22,8 @@ Aucune compilation, aucun serveur et aucune dépendance à installer.
 
 Le lecteur conserve une largeur de texte confortable et de petites marges autour de la fenêtre. Les thèmes se lisent à la suite. Échap ferme les paramètres ou le lecteur ; les flèches naviguent entre les onglets.
 
+Le lecteur, les paramètres et le bouton Distill suivent automatiquement le thème clair ou sombre du système, y compris lors d’un changement pendant la lecture.
+
 L’interface et les notes sont en français par défaut, y compris après migration des anciens réglages anglais. La langue des notes reste configurable : français, anglais, espagnol, allemand, portugais, chinois ou japonais. Le contexte personnel adapte les explications, sans supprimer les avis contraires.
 
 ## Sources et longs fils

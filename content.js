@@ -19,7 +19,17 @@
       const host = document.createElement('div');
       const root = host.attachShadow({ mode: 'closed' });
       const style = document.createElement('style');
-      style.textContent = `:host{all:initial}dialog{box-sizing:border-box;padding:0;border:1px solid #e5e6e0;border-radius:12px;width:min(1120px,calc(100vw - 32px));height:calc(100dvh - 40px);max-width:none;max-height:none;background:#fff;box-shadow:0 25px 90px #282b2733;overflow:hidden}dialog::backdrop{background:#282b2752}iframe{display:block;width:100%;height:100%;border:0}@media(max-width:640px){dialog{width:calc(100vw - 12px);height:calc(100dvh - 24px);border-radius:8px}}`;
+      style.textContent = `
+        :host{all:initial;color-scheme:light;--reader-paper:#fff;--reader-ink:#282b27;--reader-line:#e5e6e0;--reader-shadow:#282b2733}
+        dialog{box-sizing:border-box;padding:0;border:1px solid var(--reader-line);border-radius:12px;width:min(1120px,calc(100vw - 32px));height:calc(100dvh - 40px);max-width:none;max-height:none;background:var(--reader-paper);color:var(--reader-ink);box-shadow:0 25px 90px var(--reader-shadow);overflow:hidden;color-scheme:inherit}
+        dialog::backdrop{background:#282b2752}
+        iframe{display:block;width:100%;height:100%;border:0;background:var(--reader-paper);color-scheme:inherit}
+        @media(prefers-color-scheme:dark){
+          :host{color-scheme:dark;--reader-paper:#201d1b;--reader-ink:#eee9e3;--reader-line:#443c36;--reader-shadow:#00000080}
+          dialog::backdrop{background:#00000080}
+        }
+        @media(max-width:640px){dialog{width:calc(100vw - 12px);height:calc(100dvh - 24px);border-radius:8px}}
+      `;
       const dialog = document.createElement('dialog');
       dialog.setAttribute('aria-label', 'Lecture de la discussion HN');
       const frame = document.createElement('iframe');
@@ -33,7 +43,7 @@
       }).catch(() => {
         const error = document.createElement('p');
         error.textContent = 'Impossible d’ouvrir Distill. Recharge la page HN et l’extension.';
-        error.style.cssText = 'padding:24px;font:16px system-ui;color:#282b27';
+        error.style.cssText = 'padding:24px;font:16px system-ui';
         frame.replaceWith(error);
       });
       dialog.addEventListener('cancel', (event) => { event.preventDefault(); close(); });
