@@ -36,6 +36,8 @@
       "panel.js",
       "panel.css",
       "design-system.css",
+      "diagrams.js",
+      "diagrams.css",
       "api_client.js",
       "prompts.js",
       "markdown.js",

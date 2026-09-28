@@ -1,5 +1,6 @@
 import { threadUrl, sourceMap } from './data.js';
 import { kindLabel } from './render.js';
+import { splitDiagrams, diagramMarkdown, diagramDescription } from './diagrams.js';
 
 const escape = (text) => String(text).replace(/[\\`*_{}\[\]()#+!<>|]/g, '\\$&');
 export function generateMarkdown(thread, analysis, { format = 'markdown', language = 'fr', partial = false } = {}) {
@@ -20,7 +21,13 @@ export function generateMarkdown(thread, analysis, { format = 'markdown', langua
       for (const entry of section.entries) {
         if (entry.title) out.push(heading(3, entry.title));
         const kind = kindLabel(entry.kind, language);
-        out.push((kind ? `${plain(kind)} — ` : '') + plain(entry.text));
+        const body = splitDiagrams(entry.text).map(part => {
+          if (part.type === 'text') return plain(part.text.trim());
+          if (!part.diagram) return '';
+          return md ? diagramMarkdown(part.diagram) :
+            `${part.diagram.title}\n${diagramDescription(part.diagram).map(line => `- ${line}`).join('\n')}`;
+        }).filter(Boolean).join('\n\n');
+        out.push((kind ? `${plain(kind)} — ` : '') + body);
         out.push(entry.sources.map((id) => {
           const author = sources.get(id)?.author || id;
           return md ? `[${escape(author)}](${threadUrl(id)})` : `${author}: ${threadUrl(id)}`;

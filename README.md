@@ -24,6 +24,10 @@ Le lecteur conserve une largeur de texte confortable et de petites marges autour
 
 Le lecteur, les paramètres et le bouton Distill suivent automatiquement le thème clair ou sombre du système, y compris lors d’un changement pendant la lecture.
 
+La synthèse et les Q/R peuvent contenir des schémas entre les paragraphes : workflow, embranchements, hiérarchie ou relations entre arguments. Ils sont ajoutés lorsqu’ils aident à comprendre, à partir des mêmes sources que le passage et sans appel IA supplémentaire. Le prompt évalue chaque section et chaque mécanisme indépendamment, sans quota global ni obligation d’illustrer chaque section. La lecture courte privilégie les mécanismes essentiels ; la lecture approfondie couvre aussi les autres mécanismes qui gagnent à être visualisés, sans répéter un schéma équivalent. Les notes intermédiaires des longs fils restent textuelles. Les schémas suivent le thème du système et les plus larges défilent horizontalement sur petit écran ; leur description est accessible aux lecteurs d’écran. La copie Markdown les exporte en blocs Mermaid, la copie texte en relations avec des flèches.
+
+Le modèle décrit uniquement un petit graphe JSON. L’extension valide ses nœuds et liens, puis construit elle-même le SVG, sans interpréter de HTML, SVG brut ou code généré. Un schéma incomplet ou invalide reste masqué sans bloquer la lecture du passage. La nouvelle version des prompts renouvelle les résultats lors de la prochaine génération.
+
 L’interface et les notes sont en français par défaut, y compris après migration des anciens réglages anglais. La langue des notes reste configurable : français, anglais, espagnol, allemand, portugais, chinois ou japonais. Le contexte personnel adapte les explications, sans supprimer les avis contraires.
 
 ## Sources et longs fils
@@ -66,5 +70,6 @@ Les sorties ont un schéma commun de sections et d’entrées sourcées. Les ré
 | `storage.js` | Migration, clés et cache persistant |
 | `panel.html`, `panel.js`, `panel.css`, `design-system.css` | Interface de lecture et paramètres |
 | `render.js`, `markdown.js` | Affichage sans HTML généré et export sourcé |
+| `diagrams.js`, `diagrams.css` | Instructions, validation, dessin SVG et exports des schémas intégrés |
 
 Pour une vérification rapide : charger l’extension, ouvrir un Ask HN avec plusieurs branches, enregistrer une clé, consulter les sources, changer de niveau puis ouvrir les Q/R. Vérifier également l’arrêt d’une génération et la réouverture des notes.

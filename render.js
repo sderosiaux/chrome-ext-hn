@@ -1,4 +1,5 @@
 import { sourceMap, threadUrl, safeUrl } from './data.js';
+import { splitDiagrams, renderDiagram } from './diagrams.js';
 
 export const kindLabel = (kind, language = 'fr') => {
   const labels = {
@@ -26,7 +27,15 @@ function link(text, url) {
   return a;
 }
 function paragraphs(container, text) {
-  for (const paragraph of text.split(/\n\s*\n/).filter(Boolean)) container.append(element('p', paragraph));
+  for (const part of splitDiagrams(text)) {
+    if (part.type === 'diagram') {
+      const figure = renderDiagram(part.diagram);
+      if (figure) container.append(figure);
+    } else {
+      for (const paragraph of part.text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean))
+        container.append(element('p', paragraph));
+    }
+  }
 }
 
 function sourceComment(comment, sources, ancestors = new Set()) {
