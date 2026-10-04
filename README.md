@@ -11,6 +11,14 @@ Une extension Chrome pour comprendre une discussion Hacker News : ses arguments,
 
 Aucune compilation, aucun serveur et aucune dépendance à installer.
 
+## Archives GitHub
+
+**Archiver sur GitHub** enregistre la synthèse approfondie si elle est déjà terminée, sinon la courte. Le bouton consulte les notes en mémoire et le cache correspondant à la discussion, aux sources et aux paramètres actuels, quel que soit l’onglet affiché. Il ne lance aucune génération et exclut les Q/R, brouillons et notes préparatoires.
+
+Le dépôt proposé est `sderosiaux/saved-youtube-hackernews-reddit-summaries`, commun aux trois extensions. Le premier clic ouvre la configuration, également accessible dans **Paramètres → Archives GitHub**. Renseigner un [jeton GitHub à accès limité](https://github.com/settings/personal-access-tokens/new), autorisé sur ce dépôt avec **Contents: Read and write**. Le même jeton peut être saisi dans les trois extensions ; la connexion de la CLI `gh` n’est pas partagée avec Chrome. Le jeton reste en session, ou sur cet appareil si demandé, jamais dans Chrome Sync. Recharger l’extension pour activer la nouvelle autorisation `api.github.com`.
+
+Chaque clic crée ou actualise `hackernews/<id>.md` via l’API GitHub, sur la branche par défaut ou celle configurée. Le Markdown conserve titre, URL, niveau, langue, références et diagrammes Mermaid. Un contenu identique ne crée pas de commit ; une version courte ne remplace pas une archive approfondie. Un fichier non créé par les extensions n’est pas écrasé. Un lien vers le fichier apparaît après l’archivage.
+
 ## Lecture
 
 - **Synthèse** : organisation adaptée au contenu, sans nombre imposé de thèmes. Les témoignages, objections et interprétations restent distingués.

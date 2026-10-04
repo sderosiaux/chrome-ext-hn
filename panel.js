@@ -5,6 +5,8 @@ import { sourceMap } from './data.js';
 import { getSettings, saveSettings, cacheKey, readCache, writeCache, clearCache } from './storage.js';
 import { createRenderer } from './render.js';
 import { generateMarkdown } from './markdown.js';
+import { createArchiveControl, openArchiveSettings } from './github-archive-ui.js';
+import { summaryArchive } from './archive.js';
 
 const $ = (id) => document.getElementById(id);
 const renderer = createRenderer($('reader'));
@@ -12,6 +14,9 @@ const params = new URLSearchParams(location.search);
 const threadId = params.get('threadId'), token = params.get('token');
 const views = new Map();
 let settings, thread, mode = 'summary', detail = 'short', active = null, current = null, opened = false;
+const archive = createArchiveControl({ button: $('archive-button'), isReady: () => Boolean(settings && thread),
+  getDocument: () => summaryArchive({ thread, settings, views }),
+});
 const abort = () => { active?.controller.abort(); clearInterval(active?.timer); active = null; $('stop-button').hidden = true; $('progress').hidden = true; };
 const notify = (text = '', retry = false) => {
   $('notice').hidden = !text; $('notice-text').textContent = text; $('retry-button').hidden = !retry;
@@ -22,6 +27,7 @@ function close() {
 }
 function progress(text) { $('progress').hidden = false; $('progress-label').textContent = text; }
 function updateControls() {
+  archive.update();
   document.querySelectorAll('[data-mode]').forEach((button) => {
     const selected = button.dataset.mode === mode;
     button.setAttribute('aria-selected', selected); button.tabIndex = selected ? 0 : -1;
@@ -118,6 +124,11 @@ function openSettings() {
 function settingsError(error) { $('settings-error').textContent = error.message; $('settings-error').hidden = false; }
 
 $('settings-button').addEventListener('click', () => settings && openSettings());
+$('archive-settings').addEventListener('click', async () => {
+  if (!settings) return;
+  $('settings-dialog').close();
+  try { await openArchiveSettings(); } catch (error) { notify(error.message); }
+});
 $('configure-button').addEventListener('click', openSettings);
 $('cancel-settings').addEventListener('click', () => $('settings-dialog').close());
 $('provider').addEventListener('change', populateKey);
@@ -127,7 +138,7 @@ $('stop-button').addEventListener('click', () => {
 });
 $('retry-button').addEventListener('click', () => showView({ retry: true }));
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !$('settings-dialog').open) { event.preventDefault(); close(); }
+  if (event.key === 'Escape' && !$('settings-dialog').open && !document.getElementById('github-archive-dialog')?.open) { event.preventDefault(); close(); }
 });
 document.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => {
   if (!settings || mode === button.dataset.mode) return;
