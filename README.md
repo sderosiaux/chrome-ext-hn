@@ -21,10 +21,10 @@ Chaque clic crée ou actualise `hackernews/<id>.md` via l’API GitHub, sur la b
 
 ## Lecture
 
-- **Synthèse** : organisation adaptée au contenu, sans nombre imposé de thèmes. Les témoignages, objections et interprétations restent distingués.
+- **Synthèse** : organisation adaptée au contenu, sans nombre imposé de thèmes. Les témoignages, objections et interprétations restent distingués par leur libellé, ce qui évite de répéter des précautions génériques. Aucun pseudonyme dans le texte : le lecteur ne connaît pas les participants, les sources de chaque idée suffisent. Seul un rôle qui change la valeur du propos est mentionné (auteur du post, de l’outil discuté, personne qui a mesuré).
 - **Questions-réponses** : un parcours pédagogique par sujet, sans quota de questions. Les positions opposées sont expliquées dans leur contexte.
 - **Discussion** : le post initial et les commentaires d’origine, avec accès aux messages parents et aux liens cités.
-- **Courte / Approfondie** : chaque nouvelle discussion commence en **Courte** pour un premier aperçu. **Approfondie** développe les raisonnements, exemples et objections, uniquement sur demande ; le choix reste local au fil ouvert. Le niveau règle la profondeur des explications, sans fixer un nombre de questions.
+- **Courte / Approfondie** : chaque nouvelle discussion commence en **Courte** pour un premier aperçu. **Approfondie** ajoute des idées, mécanismes, conditions, chiffres, exemples et objections — de l’information, pas du récit de l’échange ni de la reformulation —, uniquement sur demande ; le choix reste local au fil ouvert. Le niveau règle la profondeur des explications, sans fixer un nombre de questions.
 - **Sources** sous chaque idée : références vérifiées contre les identifiants fournis au modèle. Elles ouvrent les commentaires sur place ou sur HN. Cette validation ne constitue pas une vérification indépendante de la véracité des propos.
 - Copie en Markdown ou texte, avec références par idée. Les notes interrompues sont explicitement marquées comme incomplètes.
 
@@ -42,7 +42,7 @@ L’interface et les notes sont en français par défaut, y compris après migra
 
 L’API officielle HN fournit le post initial et permet de résoudre les liens vers un commentaire en discussion complète. L’arbre Algolia accélère la récupération. Son nombre de commentaires et ses branches principales sont comparés aux métadonnées HN ; si l’index est incomplet ou inaccessible, l’extension parcourt les réponses via l’API officielle, avec huit requêtes simultanées au maximum.
 
-Les commentaires courts sont conservés, ainsi que les auteurs et les relations parent/réponse. Les messages supprimés restent des repères de contexte. Les scores de commentaires inconnus ne sont pas inventés. Le HTML est converti en texte et les liens HTTP(S) sont conservés séparément.
+Les commentaires courts sont conservés, ainsi que les relations parent/réponse. Les pseudonymes ne sont pas transmis au modèle ; seul l’auteur du post est signalé (`op`). Le lecteur les retrouve dans les sources et l’onglet Discussion. Les messages supprimés restent des repères de contexte. Les scores de commentaires inconnus ne sont pas inventés. Le HTML est converti en texte et les liens HTTP(S) sont conservés séparément.
 
 Il n’y a pas de plafond de commentaires. Quand le contenu tient dans le budget d’un appel, il est directement envoyé au modèle et la réponse apparaît progressivement. Le budget porte sur la taille réelle du texte et des instructions, pas sur un nombre de messages. Les entrées plus volumineuses sont réparties par branches et, si nécessaire, par passages, avec contexte parental. Chaque lot produit des notes sourcées avant la synthèse globale. Ces notes préparatoires sont visibles pendant la lecture, clairement indiquées comme provisoires ; le temps écoulé et le nombre d’idées reçues permettent de suivre l’avancement. Une réduction supplémentaire intervient seulement si les notes intermédiaires dépassent le budget d’entrée. Elle s’arrête avec une erreur si elle ne progresse plus. Cette synthèse implique une compression ; elle ne promet pas de restituer chaque détail.
 

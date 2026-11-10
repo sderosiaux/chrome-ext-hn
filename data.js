@@ -114,6 +114,10 @@ export async function fetchThread(threadId, { signal, onProgress = () => {} } = 
   return processThreadData(root, nodes);
 }
 
+// Pseudonyms never reach the model: readers don't know these people, and sources
+// already link every idea to its comments. Only the submitter's role carries meaning.
+export const opFlag = (thread, node) => (thread.author && node.author === thread.author ? { op: true } : {});
+
 export function sourceMap(thread) {
   return new Map([[thread.id, { ...thread, parent: null }], ...thread.comments.map((c) => [c.id, c])]);
 }
@@ -141,8 +145,8 @@ export function partitionThread(thread, budget = 160_000) {
     const partSize = Math.floor(budget / 4);
     for (let offset = 0; offset < node.text.length; offset += partSize) {
       const record = {
-        id: node.id, parent: node.parent || null, ancestors: path,
-        author: node.author, text: node.text.slice(offset, offset + partSize),
+        id: node.id, parent: node.parent || null, ancestors: path, ...opFlag(thread, node),
+        text: node.text.slice(offset, offset + partSize),
         ...(node.text.length > partSize ? { continuation: offset > 0 } : {}),
       };
       branches.get(branchId).push(record);
@@ -165,7 +169,7 @@ export function partitionThread(thread, budget = 160_000) {
     let contextSize = 0;
     const context = [...parents].filter((id) => !present.has(id)).map((id) => {
       const c = all.get(id);
-      return { id, parent: c.parent || null, author: c.author, excerpt: c.text.slice(0, 1200) };
+      return { id, parent: c.parent || null, ...opFlag(thread, c), excerpt: c.text.slice(0, 1200) };
     }).filter((entry) => { contextSize += JSON.stringify(entry).length; return contextSize <= budget - recordBudget; });
     return { comments, context };
   });

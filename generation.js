@@ -1,4 +1,4 @@
-import { partitionThread, sourceMap } from './data.js';
+import { opFlag, partitionThread, sourceMap } from './data.js';
 import { buildHNAnalysisPrompt } from './prompts.js';
 import { generate } from './api_client.js';
 import { AnalysisError, partialAnalysis, validateAnalysis } from './analysis.js';
@@ -6,10 +6,13 @@ import { AnalysisError, partialAnalysis, validateAnalysis } from './analysis.js'
 export async function analyzeThread({ thread, settings, mode, signal, onProgress, onPartial }) {
   const all = sourceMap(thread);
   const budget = settings.provider === 'claude' ? 100_000 : 160_000;
-  const direct = { comments: [...all.values()].filter((c) => c.text).map((c) => ({
-    id: c.id, parent: c.parent || null, author: c.author, text: c.text,
+  // A link post has no text, yet its id is every top-level comment's parent and the
+  // natural source for what the title announces. Keep it citable, as the
+  // partitioned path already does through ancestor context.
+  const direct = { comments: [...all.values()].filter((c) => c.text || c.id === thread.id).map((c) => ({
+    id: c.id, parent: c.parent || null, ...opFlag(thread, c), text: c.text,
   })) };
-  if (!direct.comments.length) throw new Error('Cette discussion ne contient pas encore de texte à analyser.');
+  if (!direct.comments.some((c) => c.text)) throw new Error('Cette discussion ne contient pas encore de texte à analyser.');
   const directPrompt = buildHNAnalysisPrompt(thread, settings, mode, direct);
   // Measure the actual payload, including instructions and reader context. Reserving
   // space for nonexistent ancestor excerpts caused ordinary threads to be split.

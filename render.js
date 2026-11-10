@@ -54,8 +54,10 @@ function sourceComment(comment, sources, ancestors = new Set()) {
     });
     article.append(details);
   }
-  article.append(element('div', comment.text || (comment.unavailable ? 'Commentaire supprimé ou inaccessible.' : 'Aucun texte dans ce message.'), 'source-text'));
+  article.append(element('div', comment.text || comment.title || (comment.unavailable ? 'Commentaire supprimé ou inaccessible.' : 'Aucun texte dans ce message.'), 'source-text'));
   const links = element('div', '', 'source-links');
+  // A link post's article URL lives outside its (empty) text.
+  if (safeUrl(comment.url)) links.append(link('Article ↗', comment.url));
   for (const source of comment.links || []) if (safeUrl(source.url)) links.append(link(source.label || source.url, source.url));
   if (links.childElementCount) article.append(links);
   return article;

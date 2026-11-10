@@ -1,4 +1,4 @@
-export const PROMPT_VERSION = '2026-09-27.6';
+export const PROMPT_VERSION = '2026-11-09.1';
 const string = { type: 'string' };
 // Simple patterns and minItems: 1 are supported by both providers. No question cap.
 const nonEmptyString = { type: 'string', pattern: '[^\\s]' };
